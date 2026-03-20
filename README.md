@@ -2,6 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![npm](https://img.shields.io/npm/v/sync-agents-settings?logo=npm)](https://www.npmjs.com/package/sync-agents-settings)
+[![npm downloads](https://img.shields.io/npm/dm/sync-agents-settings?logo=npm&label=downloads)](https://www.npmjs.com/package/sync-agents-settings)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D18-green?logo=node.js)](https://nodejs.org/)
 [![pnpm](https://img.shields.io/badge/pnpm-%3E%3D9-orange?logo=pnpm)](https://pnpm.io/)
@@ -12,7 +13,7 @@
 
 Sync MCP server configurations from **Claude Code** to **Gemini CLI**, **Codex CLI**, **OpenCode**, **Kiro CLI**, and **Cursor**.
 
-[中文說明](#中文說明)
+**README translations:** [🇹🇼 繁體中文](docs/i18n/README.zh-tw.md) | [🇨🇳 简体中文](docs/i18n/README.zh-cn.md) | [🇯🇵 日本語](docs/i18n/README.ja.md) | [🇰🇷 한국어](docs/i18n/README.ko.md)
 
 ## Why
 
@@ -289,77 +290,11 @@ Use `--no-backup` to skip. Target directories that don't exist (CLI not installe
 - Codex CLI does NOT merge global and project configs — when `.codex/` exists in a project, global `~/.codex/` is ignored
 - If target config directories don't exist, sync will skip that target (won't create directories)
 
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=Leoyang183/sync-agents-settings&type=Date)](https://star-history.com/#Leoyang183/sync-agents-settings&Date)
+
 ## License
 
 MIT
 
----
-
-## 中文說明
-
-將 **Claude Code** 的 MCP server 設定同步到 **Gemini CLI**、**Codex CLI**、**OpenCode**、**Kiro CLI** 和 **Cursor**。
-
-### 為什麼需要這個工具
-
-如果你主要用 Claude Code 開發，但也會切換其他 AI agent（Gemini CLI、Codex CLI、OpenCode、Kiro、Cursor）來善用各家的免費額度或不同模型，你一定知道這個痛點 — 每個工具的 MCP 設定格式都不一樣，一個一個設定實在太累。
-
-這個工具讓你只在 Claude Code 設定一次 MCP servers，一行指令同步到所有目標。
-
-### 快速開始
-
-不需安裝，直接用 `npx`：
-
-```bash
-# 列出所有 Claude Code 的 MCP servers
-npx sync-agents-settings list
-
-# 預覽同步（不修改任何檔案）
-npx sync-agents-settings sync --dry-run
-
-# 同步到所有目標（自動備份）
-npx sync-agents-settings sync
-
-# 同步到特定目標
-npx sync-agents-settings sync --target gemini
-npx sync-agents-settings sync --target codex
-npx sync-agents-settings sync --target opencode
-npx sync-agents-settings sync --target kiro
-npx sync-agents-settings sync --target cursor
-```
-
-### 運作原理
-
-**Claude Code 是 MCP 設定的 single source of truth**，同步到所有支援的目標。
-
-```
-                                                 ┌─→ Gemini Writer   ─→ ~/.gemini/settings.json
-                                                 ├─→ Codex Writer    ─→ ~/.codex/config.toml
-~/.claude.json ─────┐                            │
-                     ├─→ Reader ─→ UnifiedMcpServer[] ─┼─→ OpenCode Writer ─→ ~/.config/opencode/opencode.json
-~/.claude/plugins/ ──┘                            │
-                                                 ├─→ Kiro Writer     ─→ ~/.kiro/settings/mcp.json
-                                                 └─→ Cursor Writer   ─→ ~/.cursor/mcp.json
-```
-
-| 階段 | 說明 |
-|------|------|
-| **Reader** | 從 `~/.claude.json` 和已啟用 plugin 的 `.mcp.json` 讀取，合併為統一格式 |
-| **Gemini Writer** | JSON → JSON，`type: "http"` → `httpUrl`，`${VAR}` → `$VAR` |
-| **Codex Writer** | JSON → TOML，`${VAR:-default}` → 展開為實際值 |
-| **OpenCode Writer** | JSON → JSON，`command`+`args` → 合併為 `command` 陣列，`env` → `environment`，`type: "local"`/`"remote"` |
-| **Kiro Writer** | 與 Claude 相同格式，`${VAR:-default}` → 展開 |
-| **Cursor Writer** | 與 Claude 相同格式，`${VAR:-default}` → 展開 |
-
-### 安全機制
-
-- 已存在的 server 不會覆蓋（idempotent，可重複執行）
-- 預設自動備份到 `~/.sync-agents-backup/`（`--no-backup` 跳過）
-- `--dry-run` 預覽變更，不寫入任何檔案
-
-### 限制
-
-- **OAuth servers**（如 Slack）只會同步 URL，需要在各 CLI 手動認證
-- **`${CLAUDE_PLUGIN_ROOT}`** 環境變數在其他 CLI 中無法解析
-- Codex CLI 不支援 URL 中的 `${VAR:-default}` 語法，同步時會自動展開
-- 重複執行不會覆蓋已存在的設定（安全可重複）
-- 若目標設定目錄不存在，會跳過該目標（不會自動建立目錄）
