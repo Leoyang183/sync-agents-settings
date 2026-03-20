@@ -25,6 +25,13 @@ export const PATHS = {
   // Cursor
   cursorMcpConfig: join(HOME, ".cursor", "mcp.json"),
 
+  // Instructions (global)
+  claudeMdGlobal: join(HOME, ".claude", "CLAUDE.md"),
+  geminiMdGlobal: join(HOME, ".gemini", "GEMINI.md"),
+  codexMdGlobal: join(HOME, ".codex", "AGENTS.md"),
+  openCodeMdGlobal: join(HOME, ".config", "opencode", "AGENTS.md"),
+  kiroSteeringGlobal: join(HOME, ".kiro", "steering", "claude-instructions.md"),
+
   // Backups
   backupDir: join(HOME, ".sync-agents-backup"),
 } as const;

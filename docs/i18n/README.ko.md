@@ -7,7 +7,7 @@
 [![MCP](https://img.shields.io/badge/MCP-compatible-8A2BE2)](https://modelcontextprotocol.io/)
 [![CI](https://github.com/Leoyang183/sync-agents-settings/actions/workflows/ci.yml/badge.svg)](https://github.com/Leoyang183/sync-agents-settings/actions/workflows/ci.yml)
 
-**Claude Code**의 MCP 서버 설정을 **Gemini CLI**, **Codex CLI**, **OpenCode**, **Kiro CLI**, **Cursor**로 동기화합니다.
+**Claude Code**의 MCP 서버 설정과 지시 파일(CLAUDE.md)을 **Gemini CLI**, **Codex CLI**, **OpenCode**, **Kiro CLI**, **Cursor**로 동기화합니다.
 
 **다른 언어:** [🇺🇸 English](../../README.md) | [🇹🇼 繁體中文](README.zh-tw.md) | [🇨🇳 简体中文](README.zh-cn.md) | [🇯🇵 日本語](README.ja.md)
 
@@ -15,7 +15,9 @@
 
 Claude Code를 주요 AI 코딩 에이전트로 사용하면서 무료 티어나 다른 모델을 활용하기 위해 다른 에이전트(Gemini CLI, Codex CLI, OpenCode, Kiro, Cursor)도 함께 사용한다면, 각 도구마다 MCP 설정 형식이 다르고 하나씩 설정하는 것이 얼마나 번거로운지 아실 겁니다.
 
-이 도구를 사용하면 Claude Code에서 한 번만 MCP 서버를 설정하고, 하나의 명령어로 모든 대상에 동기화할 수 있습니다.
+지시 파일도 마찬가지입니다 — CLAUDE.md, GEMINI.md, AGENTS.md 모두 같은 내용이 필요하지만 형식이 다릅니다.
+
+이 도구를 사용하면 Claude Code에서 한 번만 MCP 서버를 설정하고 지시를 작성하면, 하나의 명령어로 모든 대상에 동기화할 수 있습니다.
 
 ## 빠른 시작
 
@@ -30,6 +32,9 @@ npx sync-agents-settings sync --dry-run
 
 # 모든 대상에 동기화 (자동 백업 포함)
 npx sync-agents-settings sync
+
+# CLAUDE.md 지시 파일을 모든 대상에 동기화
+npx sync-agents-settings sync-instructions
 ```
 
 ## 설치 (선택사항)
@@ -67,6 +72,24 @@ sync-agents sync --no-backup
 
 # 상세 출력
 sync-agents sync -v
+
+# 지시 파일 동기화 (CLAUDE.md → GEMINI.md / AGENTS.md / Kiro steering / Cursor rules)
+sync-agents sync-instructions
+
+# 글로벌 지시만 동기화
+sync-agents sync-instructions --global
+
+# 프로젝트 수준 지시만 동기화
+sync-agents sync-instructions --local
+
+# 특정 대상에 동기화
+sync-agents sync-instructions --target gemini codex
+
+# 프롬프트 없이 자동 덮어쓰기 (CI용)
+sync-agents sync-instructions --on-conflict overwrite
+
+# 지시 동기화 미리보기
+sync-agents sync-instructions --dry-run
 ```
 
 ## 작동 원리
@@ -92,6 +115,20 @@ sync-agents sync -v
 | **Kiro Writer** | Claude와 동일한 형식, `${VAR:-default}` → 확장 |
 | **Cursor Writer** | Claude와 동일한 형식, `${VAR:-default}` → 확장 |
 
+### 지시 파일 동기화 (`sync-instructions`)
+
+CLAUDE.md 지시 파일을 각 대상의 네이티브 형식으로 동기화합니다:
+
+| 대상 | 글로벌 경로 | 프로젝트 경로 | 형식 변환 |
+|------|-----------|-------------|---------|
+| Gemini | `~/.gemini/GEMINI.md` | `./GEMINI.md` | 그대로 복사 (`@import` 행 필터링) |
+| Codex | `~/.codex/AGENTS.md` | `./AGENTS.md` | 그대로 복사 (`@import` 행 필터링) |
+| OpenCode | `~/.config/opencode/AGENTS.md` | `./AGENTS.md` (Codex와 공유) | 그대로 복사 (`@import` 행 필터링) |
+| Kiro | `~/.kiro/steering/claude-instructions.md` | `.kiro/steering/claude-instructions.md` | `inclusion: always` frontmatter 추가 |
+| Cursor | 미지원 (SQLite) | `.cursor/rules/claude-instructions.mdc` | `alwaysApply: true` frontmatter 추가 |
+
+대상 파일이 이미 존재하는 경우, **덮어쓰기**, **추가** (기존 내용 유지 + CLAUDE.md 추가), 또는 **건너뛰기**를 선택할 수 있습니다. `--on-conflict overwrite|append|skip`으로 비대화형 모드를 사용할 수 있습니다.
+
 ## 안전 메커니즘
 
 - 기존 서버는 덮어쓰지 않음 (멱등성, 재실행 가능)
@@ -99,6 +136,8 @@ sync-agents sync -v
 - `--dry-run`으로 파일을 변경하지 않고 변경 사항 미리보기
 
 ## 설정 파일 위치
+
+### MCP 설정 파일
 
 | 도구 | 설정 파일 경로 | 형식 |
 |------|--------------|------|
@@ -111,6 +150,17 @@ sync-agents sync -v
 | OpenCode (글로벌) | `~/.config/opencode/opencode.json` | JSON |
 | Kiro CLI (글로벌) | `~/.kiro/settings/mcp.json` | JSON |
 | Cursor (글로벌) | `~/.cursor/mcp.json` | JSON |
+
+### 지시 파일 경로
+
+| 도구 | 글로벌 경로 | 프로젝트 경로 | 형식 |
+|------|-----------|-------------|------|
+| Claude Code | `~/.claude/CLAUDE.md` | `./CLAUDE.md` | Markdown |
+| Gemini CLI | `~/.gemini/GEMINI.md` | `./GEMINI.md` | Markdown |
+| Codex CLI | `~/.codex/AGENTS.md` | `./AGENTS.md` | Markdown |
+| OpenCode | `~/.config/opencode/AGENTS.md` | `./AGENTS.md` | Markdown |
+| Kiro CLI | `~/.kiro/steering/claude-instructions.md` | `.kiro/steering/claude-instructions.md` | Markdown + frontmatter |
+| Cursor | 미지원 (SQLite) | `.cursor/rules/claude-instructions.mdc` | MDC (Markdown + frontmatter) |
 
 ## 제한 사항
 

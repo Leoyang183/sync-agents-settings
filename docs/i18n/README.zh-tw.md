@@ -7,15 +7,15 @@
 [![MCP](https://img.shields.io/badge/MCP-compatible-8A2BE2)](https://modelcontextprotocol.io/)
 [![CI](https://github.com/Leoyang183/sync-agents-settings/actions/workflows/ci.yml/badge.svg)](https://github.com/Leoyang183/sync-agents-settings/actions/workflows/ci.yml)
 
-將 **Claude Code** 的 MCP server 設定同步到 **Gemini CLI**、**Codex CLI**、**OpenCode**、**Kiro CLI** 和 **Cursor**。
+將 **Claude Code** 的 MCP server 設定和指令檔（CLAUDE.md）同步到 **Gemini CLI**、**Codex CLI**、**OpenCode**、**Kiro CLI** 和 **Cursor**。
 
 **其他語言：** [🇺🇸 English](../../README.md) | [🇨🇳 简体中文](README.zh-cn.md) | [🇯🇵 日本語](README.ja.md) | [🇰🇷 한국어](README.ko.md)
 
 ## 為什麼需要這個工具
 
-如果你主要用 Claude Code 開發，但也會切換其他 AI agent（Gemini CLI、Codex CLI、OpenCode、Kiro、Cursor）來善用各家的免費額度或不同模型，你一定知道這個痛點 — 每個工具的 MCP 設定格式都不一樣，一個一個設定實在太累。
+如果你主要用 Claude Code 開發，但也會切換其他 AI agent（Gemini CLI、Codex CLI、OpenCode、Kiro、Cursor）來善用各家的免費額度或不同模型，你一定知道這個痛點 — 每個工具的 MCP 設定格式都不一樣，一個一個設定實在太累。指令檔也是一樣 — CLAUDE.md、GEMINI.md、AGENTS.md 都需要同樣的內容，但格式各不相同。
 
-這個工具讓你只在 Claude Code 設定一次 MCP servers，一行指令同步到所有目標。
+這個工具讓你只在 Claude Code 設定一次 MCP servers 和撰寫指令，一行指令同步到所有目標。
 
 ## 快速開始
 
@@ -30,6 +30,9 @@ npx sync-agents-settings sync --dry-run
 
 # 同步到所有目標（自動備份）
 npx sync-agents-settings sync
+
+# 同步 CLAUDE.md 指令檔到所有目標
+npx sync-agents-settings sync-instructions
 ```
 
 ## 安裝（選用）
@@ -67,6 +70,24 @@ sync-agents sync --no-backup
 
 # 詳細輸出
 sync-agents sync -v
+
+# 同步指令檔（CLAUDE.md → GEMINI.md / AGENTS.md / Kiro steering / Cursor rules）
+sync-agents sync-instructions
+
+# 只同步全域指令
+sync-agents sync-instructions --global
+
+# 只同步專案層級指令
+sync-agents sync-instructions --local
+
+# 同步到特定目標
+sync-agents sync-instructions --target gemini codex
+
+# 自動覆蓋不詢問（適用於 CI）
+sync-agents sync-instructions --on-conflict overwrite
+
+# 預覽指令同步
+sync-agents sync-instructions --dry-run
 ```
 
 ## 運作原理
@@ -92,6 +113,20 @@ sync-agents sync -v
 | **Kiro Writer** | 與 Claude 相同格式，`${VAR:-default}` → 展開 |
 | **Cursor Writer** | 與 Claude 相同格式，`${VAR:-default}` → 展開 |
 
+### 指令檔同步（`sync-instructions`）
+
+將 CLAUDE.md 指令檔同步到各目標的原生格式：
+
+| 目標 | 全域路徑 | 專案路徑 | 格式轉換 |
+|------|---------|---------|---------|
+| Gemini | `~/.gemini/GEMINI.md` | `./GEMINI.md` | 直接複製（過濾 `@import` 行） |
+| Codex | `~/.codex/AGENTS.md` | `./AGENTS.md` | 直接複製（過濾 `@import` 行） |
+| OpenCode | `~/.config/opencode/AGENTS.md` | `./AGENTS.md`（與 Codex 共用） | 直接複製（過濾 `@import` 行） |
+| Kiro | `~/.kiro/steering/claude-instructions.md` | `.kiro/steering/claude-instructions.md` | 加上 `inclusion: always` frontmatter |
+| Cursor | 不支援（SQLite） | `.cursor/rules/claude-instructions.mdc` | 加上 `alwaysApply: true` frontmatter |
+
+當目標檔案已存在時，會詢問你選擇：**覆蓋**、**附加**（保留原有內容 + 加上 CLAUDE.md）、或**跳過**。使用 `--on-conflict overwrite|append|skip` 可跳過互動式詢問。
+
 ## 安全機制
 
 - 已存在的 server 不會覆蓋（idempotent，可重複執行）
@@ -111,6 +146,17 @@ sync-agents sync -v
 | OpenCode（全域） | `~/.config/opencode/opencode.json` | JSON |
 | Kiro CLI（全域） | `~/.kiro/settings/mcp.json` | JSON |
 | Cursor（全域） | `~/.cursor/mcp.json` | JSON |
+
+### 指令檔路徑
+
+| 工具 | 全域路徑 | 專案路徑 | 格式 |
+|------|---------|---------|------|
+| Claude Code | `~/.claude/CLAUDE.md` | `./CLAUDE.md` | Markdown |
+| Gemini CLI | `~/.gemini/GEMINI.md` | `./GEMINI.md` | Markdown |
+| Codex CLI | `~/.codex/AGENTS.md` | `./AGENTS.md` | Markdown |
+| OpenCode | `~/.config/opencode/AGENTS.md` | `./AGENTS.md` | Markdown |
+| Kiro CLI | `~/.kiro/steering/claude-instructions.md` | `.kiro/steering/claude-instructions.md` | Markdown + frontmatter |
+| Cursor | 不支援（SQLite） | `.cursor/rules/claude-instructions.mdc` | MDC（Markdown + frontmatter） |
 
 ## 限制
 

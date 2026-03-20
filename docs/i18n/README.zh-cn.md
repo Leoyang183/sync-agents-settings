@@ -7,7 +7,7 @@
 [![MCP](https://img.shields.io/badge/MCP-compatible-8A2BE2)](https://modelcontextprotocol.io/)
 [![CI](https://github.com/Leoyang183/sync-agents-settings/actions/workflows/ci.yml/badge.svg)](https://github.com/Leoyang183/sync-agents-settings/actions/workflows/ci.yml)
 
-将 **Claude Code** 的 MCP server 配置同步到 **Gemini CLI**、**Codex CLI**、**OpenCode**、**Kiro CLI** 和 **Cursor**。
+将 **Claude Code** 的 MCP server 配置和指令文件（CLAUDE.md）同步到 **Gemini CLI**、**Codex CLI**、**OpenCode**、**Kiro CLI** 和 **Cursor**。
 
 **其他语言：** [🇺🇸 English](../../README.md) | [🇹🇼 繁體中文](README.zh-tw.md) | [🇯🇵 日本語](README.ja.md) | [🇰🇷 한국어](README.ko.md)
 
@@ -15,7 +15,9 @@
 
 如果你主要用 Claude Code 开发，但也会切换其他 AI agent（Gemini CLI、Codex CLI、OpenCode、Kiro、Cursor）来利用各家的免费额度或不同模型，你一定知道这个痛点——每个工具的 MCP 配置格式都不一样，一个一个配置实在太累。
 
-这个工具让你只在 Claude Code 配置一次 MCP servers，一行命令同步到所有目标。
+指令文件也是一样——CLAUDE.md、GEMINI.md、AGENTS.md 都需要相同的内容，但格式各不相同。
+
+这个工具让你只在 Claude Code 配置一次 MCP servers 和编写指令，一行命令同步到所有目标。
 
 ## 快速开始
 
@@ -30,6 +32,9 @@ npx sync-agents-settings sync --dry-run
 
 # 同步到所有目标（自动备份）
 npx sync-agents-settings sync
+
+# 同步 CLAUDE.md 指令文件到所有目标
+npx sync-agents-settings sync-instructions
 ```
 
 ## 安装（可选）
@@ -67,6 +72,24 @@ sync-agents sync --no-backup
 
 # 详细输出
 sync-agents sync -v
+
+# 同步指令文件（CLAUDE.md → GEMINI.md / AGENTS.md / Kiro steering / Cursor rules）
+sync-agents sync-instructions
+
+# 只同步全局指令
+sync-agents sync-instructions --global
+
+# 只同步项目级指令
+sync-agents sync-instructions --local
+
+# 同步到特定目标
+sync-agents sync-instructions --target gemini codex
+
+# 自动覆盖不询问（适用于 CI）
+sync-agents sync-instructions --on-conflict overwrite
+
+# 预览指令同步
+sync-agents sync-instructions --dry-run
 ```
 
 ## 工作原理
@@ -92,6 +115,20 @@ sync-agents sync -v
 | **Kiro Writer** | 与 Claude 相同格式，`${VAR:-default}` → 展开 |
 | **Cursor Writer** | 与 Claude 相同格式，`${VAR:-default}` → 展开 |
 
+### 指令文件同步（`sync-instructions`）
+
+将 CLAUDE.md 指令文件同步到各目标的原生格式：
+
+| 目标 | 全局路径 | 项目路径 | 格式转换 |
+|------|---------|---------|---------|
+| Gemini | `~/.gemini/GEMINI.md` | `./GEMINI.md` | 直接复制（过滤 `@import` 行） |
+| Codex | `~/.codex/AGENTS.md` | `./AGENTS.md` | 直接复制（过滤 `@import` 行） |
+| OpenCode | `~/.config/opencode/AGENTS.md` | `./AGENTS.md`（与 Codex 共用） | 直接复制（过滤 `@import` 行） |
+| Kiro | `~/.kiro/steering/claude-instructions.md` | `.kiro/steering/claude-instructions.md` | 加上 `inclusion: always` frontmatter |
+| Cursor | 不支持（SQLite） | `.cursor/rules/claude-instructions.mdc` | 加上 `alwaysApply: true` frontmatter |
+
+当目标文件已存在时，会询问你选择：**覆盖**、**追加**（保留原有内容 + 加上 CLAUDE.md）、或**跳过**。使用 `--on-conflict overwrite|append|skip` 可跳过交互式询问。
+
 ## 安全机制
 
 - 已存在的 server 不会覆盖（幂等，可重复执行）
@@ -99,6 +136,8 @@ sync-agents sync -v
 - `--dry-run` 预览变更，不写入任何文件
 
 ## 配置文件路径
+
+### MCP 配置文件
 
 | 工具 | 配置文件路径 | 格式 |
 |------|------------|------|
@@ -111,6 +150,17 @@ sync-agents sync -v
 | OpenCode（全局） | `~/.config/opencode/opencode.json` | JSON |
 | Kiro CLI（全局） | `~/.kiro/settings/mcp.json` | JSON |
 | Cursor（全局） | `~/.cursor/mcp.json` | JSON |
+
+### 指令文件路径
+
+| 工具 | 全局路径 | 项目路径 | 格式 |
+|------|---------|---------|------|
+| Claude Code | `~/.claude/CLAUDE.md` | `./CLAUDE.md` | Markdown |
+| Gemini CLI | `~/.gemini/GEMINI.md` | `./GEMINI.md` | Markdown |
+| Codex CLI | `~/.codex/AGENTS.md` | `./AGENTS.md` | Markdown |
+| OpenCode | `~/.config/opencode/AGENTS.md` | `./AGENTS.md` | Markdown |
+| Kiro CLI | `~/.kiro/steering/claude-instructions.md` | `.kiro/steering/claude-instructions.md` | Markdown + frontmatter |
+| Cursor | 不支持（SQLite） | `.cursor/rules/claude-instructions.mdc` | MDC（Markdown + frontmatter） |
 
 ## 限制
 

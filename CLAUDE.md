@@ -44,10 +44,26 @@ Writers (src/writers/*.ts)
 
 **Adding a new target that uses Claude's format:** Create a one-liner writer like `kiro.ts`/`cursor.ts`, add path to `paths.ts`, add target name to `SyncTarget` union in `types.ts`, wire into `cli.ts` and `backup.ts`.
 
+**Instruction sync (`sync-instructions` command):**
+
+```
+src/instructions.ts
+  → reads CLAUDE.md (global or local)
+  → filterClaudeSpecificSyntax() removes @import lines
+  → optional transform: wrapForKiro() or wrapForCursor() adds frontmatter
+  → writes to target instruction file
+
+src/prompt.ts
+  → askConflictAction() interactive prompt when target file exists
+  → options: overwrite / append / skip
+```
+
 **Key modules:**
 - `src/env.ts` — `expandEnvVars()` resolves `${VAR:-default}` syntax for targets that don't support it (Codex, OpenCode, Kiro, Cursor)
 - `src/backup.ts` — copies all affected config files to `~/.sync-agents-backup/<timestamp>/` before writing
-- `src/paths.ts` — centralized config file paths for all targets
+- `src/paths.ts` — centralized config file paths for all targets (MCP + instruction paths)
+- `src/instructions.ts` — instruction file sync logic with source caching and transform pipeline
+- `src/prompt.ts` — interactive conflict resolution (overwrite/append/skip)
 
 ## Testing
 

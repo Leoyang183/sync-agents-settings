@@ -10,6 +10,14 @@ import { writeToCursor } from "./writers/cursor.js";
 import { createBackup, getFilesToBackup } from "./backup.js";
 import { PATHS } from "./paths.js";
 import type { SyncTarget, UnifiedMcpServer } from "./types.js";
+import {
+  syncInstructions,
+  getGlobalSyncPairs,
+  getLocalSyncPairs,
+  getUnsupportedGlobalTargets,
+  type InstructionsTarget,
+} from "./instructions.js";
+import type { ConflictAction } from "./prompt.js";
 
 const program = new Command();
 
@@ -144,6 +152,94 @@ program
       }
     }
   });
+
+program
+  .command("sync-instructions")
+  .description("Sync CLAUDE.md instruction files to other AI agent formats")
+  .option("-t, --target <targets...>", "sync targets (gemini, codex, opencode, kiro, cursor)", [
+    "gemini",
+    "codex",
+    "opencode",
+    "kiro",
+    "cursor",
+  ])
+  .option("--global", "sync global config (~/.claude/CLAUDE.md)", false)
+  .option("--local", "sync project-level CLAUDE.md in current directory", false)
+  .option("--dry-run", "preview mode, no files will be written", false)
+  .option("--no-backup", "skip backup")
+  .option(
+    "--on-conflict <action>",
+    "action when target exists: overwrite, append, skip (skips interactive prompt)"
+  )
+  .action(async (opts) => {
+    const targets = opts.target as InstructionsTarget[];
+    const syncGlobal = opts.global as boolean;
+    const syncLocal = opts.local as boolean;
+    const dryRun = opts.dryRun as boolean;
+    const skipBackup = !opts.backup;
+    const onConflict = opts.onConflict as ConflictAction | undefined;
+
+    // Default: sync both if neither flag is set
+    const doGlobal = syncGlobal || (!syncGlobal && !syncLocal);
+    const doLocal = syncLocal || (!syncGlobal && !syncLocal);
+
+    if (dryRun) {
+      console.log("🔍 Dry-run mode — no files will be written\n");
+    }
+
+    // Global sync
+    if (doGlobal) {
+      console.log("📋 Syncing global instructions (~/.claude/CLAUDE.md)...\n");
+
+      const unsupported = getUnsupportedGlobalTargets(targets);
+      for (const msg of unsupported) {
+        console.log(`  ⚠  ${msg}`);
+      }
+
+      const pairs = getGlobalSyncPairs(targets);
+      backupTargets(pairs, skipBackup, dryRun);
+      const result = await syncInstructions(pairs, { dryRun, force: onConflict });
+      printInstructionsResult(result);
+    }
+
+    // Local sync
+    if (doLocal) {
+      console.log("📋 Syncing local instructions (./CLAUDE.md)...\n");
+      const pairs = getLocalSyncPairs(targets, process.cwd());
+      backupTargets(pairs, skipBackup, dryRun);
+      const result = await syncInstructions(pairs, { dryRun, force: onConflict });
+      printInstructionsResult(result);
+    }
+
+    console.log("✅ Instructions sync complete!");
+  });
+
+function backupTargets(pairs: { target: string }[], skipBackup: boolean, dryRun: boolean): void {
+  if (skipBackup || dryRun) return;
+  const filesToBackup = pairs.map((p) => p.target).filter((f) => existsSync(f));
+  if (filesToBackup.length > 0) {
+    console.log("💾 Backing up existing files...");
+    const backupDir = createBackup(filesToBackup);
+    console.log(`  Backup directory: ${backupDir}\n`);
+  }
+}
+
+function printInstructionsResult(result: {
+  synced: string[];
+  skipped: string[];
+  appended: string[];
+}) {
+  if (result.synced.length > 0) {
+    console.log(`  ✅ Synced: ${result.synced.join(", ")}`);
+  }
+  if (result.appended.length > 0) {
+    console.log(`  📎 Appended: ${result.appended.join(", ")}`);
+  }
+  if (result.skipped.length > 0) {
+    console.log(`  ⏭  Skipped: ${result.skipped.join(", ")}`);
+  }
+  console.log();
+}
 
 function readExistingServerNames(
   configPath: string,

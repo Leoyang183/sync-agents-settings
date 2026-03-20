@@ -7,7 +7,7 @@
 [![MCP](https://img.shields.io/badge/MCP-compatible-8A2BE2)](https://modelcontextprotocol.io/)
 [![CI](https://github.com/Leoyang183/sync-agents-settings/actions/workflows/ci.yml/badge.svg)](https://github.com/Leoyang183/sync-agents-settings/actions/workflows/ci.yml)
 
-**Claude Code** の MCP サーバー設定を **Gemini CLI**、**Codex CLI**、**OpenCode**、**Kiro CLI**、**Cursor** に同期します。
+**Claude Code** の MCP サーバー設定と指示ファイル（CLAUDE.md）を **Gemini CLI**、**Codex CLI**、**OpenCode**、**Kiro CLI**、**Cursor** に同期します。
 
 **他の言語：** [🇺🇸 English](../../README.md) | [🇹🇼 繁體中文](README.zh-tw.md) | [🇨🇳 简体中文](README.zh-cn.md) | [🇰🇷 한국어](README.ko.md)
 
@@ -15,7 +15,9 @@
 
 Claude Code をメインの AI コーディングエージェントとして使いながら、無料枠や異なるモデルを活用するために他のエージェント（Gemini CLI、Codex CLI、OpenCode、Kiro、Cursor）も使い分けている場合、各ツールの MCP 設定形式がバラバラで、一つずつ設定するのは面倒です。
 
-このツールを使えば、Claude Code で一度だけ MCP サーバーを設定し、一つのコマンドですべてのターゲットに同期できます。
+指示ファイルも同じです — CLAUDE.md、GEMINI.md、AGENTS.md はすべて同じ内容が必要ですが、フォーマットが異なります。
+
+このツールを使えば、Claude Code で一度だけ MCP サーバーの設定と指示を書き、一つのコマンドですべてのターゲットに同期できます。
 
 ## クイックスタート
 
@@ -30,6 +32,9 @@ npx sync-agents-settings sync --dry-run
 
 # すべてのターゲットに同期（自動バックアップ付き）
 npx sync-agents-settings sync
+
+# CLAUDE.md 指示ファイルをすべてのターゲットに同期
+npx sync-agents-settings sync-instructions
 ```
 
 ## インストール（任意）
@@ -67,6 +72,24 @@ sync-agents sync --no-backup
 
 # 詳細出力
 sync-agents sync -v
+
+# 指示ファイルを同期（CLAUDE.md → GEMINI.md / AGENTS.md / Kiro steering / Cursor rules）
+sync-agents sync-instructions
+
+# グローバル指示のみ同期
+sync-agents sync-instructions --global
+
+# プロジェクトレベル指示のみ同期
+sync-agents sync-instructions --local
+
+# 特定のターゲットに同期
+sync-agents sync-instructions --target gemini codex
+
+# プロンプトなしで自動上書き（CI向け）
+sync-agents sync-instructions --on-conflict overwrite
+
+# 指示同期のプレビュー
+sync-agents sync-instructions --dry-run
 ```
 
 ## 仕組み
@@ -92,6 +115,20 @@ sync-agents sync -v
 | **Kiro Writer** | Claude と同じ形式、`${VAR:-default}` → 展開 |
 | **Cursor Writer** | Claude と同じ形式、`${VAR:-default}` → 展開 |
 
+### 指示ファイル同期（`sync-instructions`）
+
+CLAUDE.md 指示ファイルを各ターゲットのネイティブフォーマットに同期します：
+
+| ターゲット | グローバルパス | プロジェクトパス | フォーマット変換 |
+|-----------|-------------|---------------|--------------|
+| Gemini | `~/.gemini/GEMINI.md` | `./GEMINI.md` | そのままコピー（`@import` 行をフィルター） |
+| Codex | `~/.codex/AGENTS.md` | `./AGENTS.md` | そのままコピー（`@import` 行をフィルター） |
+| OpenCode | `~/.config/opencode/AGENTS.md` | `./AGENTS.md`（Codex と共有） | そのままコピー（`@import` 行をフィルター） |
+| Kiro | `~/.kiro/steering/claude-instructions.md` | `.kiro/steering/claude-instructions.md` | `inclusion: always` frontmatter を追加 |
+| Cursor | 非対応（SQLite） | `.cursor/rules/claude-instructions.mdc` | `alwaysApply: true` frontmatter を追加 |
+
+ターゲットファイルが既に存在する場合、**上書き**、**追記**（既存の内容を保持 + CLAUDE.md を追加）、または**スキップ**を選択できます。`--on-conflict overwrite|append|skip` で非対話モードにできます。
+
 ## 安全機能
 
 - 既存のサーバーは上書きされません（べき等、再実行可能）
@@ -99,6 +136,8 @@ sync-agents sync -v
 - `--dry-run` でファイルを変更せずに変更内容をプレビュー
 
 ## 設定ファイルの場所
+
+### MCP 設定ファイル
 
 | ツール | 設定ファイルパス | 形式 |
 |--------|----------------|------|
@@ -111,6 +150,17 @@ sync-agents sync -v
 | OpenCode（グローバル） | `~/.config/opencode/opencode.json` | JSON |
 | Kiro CLI（グローバル） | `~/.kiro/settings/mcp.json` | JSON |
 | Cursor（グローバル） | `~/.cursor/mcp.json` | JSON |
+
+### 指示ファイルパス
+
+| ツール | グローバルパス | プロジェクトパス | 形式 |
+|--------|-------------|---------------|------|
+| Claude Code | `~/.claude/CLAUDE.md` | `./CLAUDE.md` | Markdown |
+| Gemini CLI | `~/.gemini/GEMINI.md` | `./GEMINI.md` | Markdown |
+| Codex CLI | `~/.codex/AGENTS.md` | `./AGENTS.md` | Markdown |
+| OpenCode | `~/.config/opencode/AGENTS.md` | `./AGENTS.md` | Markdown |
+| Kiro CLI | `~/.kiro/steering/claude-instructions.md` | `.kiro/steering/claude-instructions.md` | Markdown + frontmatter |
+| Cursor | 非対応（SQLite） | `.cursor/rules/claude-instructions.mdc` | MDC（Markdown + frontmatter） |
 
 ## 制限事項
 

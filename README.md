@@ -11,15 +11,15 @@
 [![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?logo=prettier)](https://prettier.io/)
 [![CI](https://github.com/Leoyang183/sync-agents-settings/actions/workflows/ci.yml/badge.svg)](https://github.com/Leoyang183/sync-agents-settings/actions/workflows/ci.yml)
 
-Sync MCP server configurations from **Claude Code** to **Gemini CLI**, **Codex CLI**, **OpenCode**, **Kiro CLI**, and **Cursor**.
+Sync MCP server configurations and instruction files (CLAUDE.md) from **Claude Code** to **Gemini CLI**, **Codex CLI**, **OpenCode**, **Kiro CLI**, and **Cursor**.
 
 **README translations:** [🇹🇼 繁體中文](docs/i18n/README.zh-tw.md) | [🇨🇳 简体中文](docs/i18n/README.zh-cn.md) | [🇯🇵 日本語](docs/i18n/README.ja.md) | [🇰🇷 한국어](docs/i18n/README.ko.md)
 
 ## Why
 
-If you use Claude Code as your primary AI coding agent but also switch between other agents (Gemini CLI, Codex CLI, OpenCode, Kiro, Cursor) to take advantage of their free tiers or different models, you know the pain — every tool has its own MCP config format, and setting them up one by one is tedious.
+If you use Claude Code as your primary AI coding agent but also switch between other agents (Gemini CLI, Codex CLI, OpenCode, Kiro, Cursor) to take advantage of their free tiers or different models, you know the pain — every tool has its own MCP config format, and setting them up one by one is tedious. Same goes for instruction files — CLAUDE.md, GEMINI.md, AGENTS.md all need the same content but in different formats.
 
-This tool lets you configure MCP servers once in Claude Code, then sync everywhere with a single command.
+This tool lets you configure MCP servers and write instructions once in Claude Code, then sync everywhere with a single command.
 
 ## Quick Start
 
@@ -34,6 +34,9 @@ npx sync-agents-settings sync --dry-run
 
 # Sync to all targets (with automatic backup)
 npx sync-agents-settings sync
+
+# Sync CLAUDE.md instructions to all targets
+npx sync-agents-settings sync-instructions
 ```
 
 ## Install (optional)
@@ -71,6 +74,24 @@ sync-agents sync --no-backup
 
 # Verbose output
 sync-agents sync -v
+
+# Sync instruction files (CLAUDE.md → GEMINI.md / AGENTS.md / Kiro steering / Cursor rules)
+sync-agents sync-instructions
+
+# Sync only global instructions
+sync-agents sync-instructions --global
+
+# Sync only project-level instructions
+sync-agents sync-instructions --local
+
+# Sync to specific targets
+sync-agents sync-instructions --target gemini codex
+
+# Auto-overwrite without prompts (for CI)
+sync-agents sync-instructions --on-conflict overwrite
+
+# Preview instruction sync
+sync-agents sync-instructions --dry-run
 ```
 
 ### Development
@@ -105,6 +126,33 @@ pnpm test            # Run tests
 | **OpenCode Writer** | JSON → JSON, `command`+`args` → merged `command` array, `env` → `environment`, `type: "local"`/`"remote"` |
 | **Kiro Writer** | Same format as Claude, `${VAR:-default}` → expanded |
 | **Cursor Writer** | Same format as Claude, `${VAR:-default}` → expanded |
+
+### Instruction Sync (`sync-instructions`)
+
+Syncs CLAUDE.md instruction files to each target's native format:
+
+```
+                                          ┌─→ ~/.gemini/GEMINI.md             (plain copy)
+                                          ├─→ ~/.codex/AGENTS.md              (plain copy)
+~/.claude/CLAUDE.md ─→ filter @imports ──┼─→ ~/.config/opencode/AGENTS.md    (plain copy)
+                                          ├─→ ~/.kiro/steering/claude-instructions.md  (+ inclusion: always)
+                                          └─→ ⚠ Cursor global not supported  (SQLite)
+
+                                          ┌─→ ./GEMINI.md                     (plain copy)
+                                          ├─→ ./AGENTS.md                     (Codex + OpenCode share)
+./CLAUDE.md ──────────→ filter @imports ──┼─→ .kiro/steering/claude-instructions.md    (+ inclusion: always)
+                                          └─→ .cursor/rules/claude-instructions.mdc   (+ alwaysApply: true)
+```
+
+| Target | Global | Local | Format Transform |
+|--------|--------|-------|------------------|
+| Gemini | `~/.gemini/GEMINI.md` | `./GEMINI.md` | Plain copy (filter `@import` lines) |
+| Codex | `~/.codex/AGENTS.md` | `./AGENTS.md` | Plain copy (filter `@import` lines) |
+| OpenCode | `~/.config/opencode/AGENTS.md` | `./AGENTS.md` (shared with Codex) | Plain copy (filter `@import` lines) |
+| Kiro | `~/.kiro/steering/claude-instructions.md` | `.kiro/steering/claude-instructions.md` | Add `inclusion: always` frontmatter |
+| Cursor | Not supported (SQLite) | `.cursor/rules/claude-instructions.mdc` | Add `alwaysApply: true` frontmatter |
+
+When a target file already exists, you'll be prompted to choose: **overwrite**, **append** (keep existing + add CLAUDE.md below), or **skip**. Use `--on-conflict overwrite|append|skip` for non-interactive mode.
 
 **Safety mechanisms:**
 - Existing servers are never overwritten (idempotent, safe to re-run)
@@ -266,6 +314,8 @@ Use `--no-backup` to skip. Target directories that don't exist (CLI not installe
 
 ## Config File Locations
 
+### MCP Settings
+
 | Tool | Config Path | Format |
 |------|-----------|--------|
 | Claude Code (user MCP) | `~/.claude.json` | JSON |
@@ -280,6 +330,17 @@ Use `--no-backup` to skip. Target directories that don't exist (CLI not installe
 | Kiro CLI (project) | `.kiro/settings/mcp.json` in project root | JSON |
 | Cursor (global) | `~/.cursor/mcp.json` | JSON |
 | Cursor (project) | `.cursor/mcp.json` in project root | JSON |
+
+### Instruction Files
+
+| Tool | Global Path | Project Path | Format |
+|------|------------|-------------|--------|
+| Claude Code | `~/.claude/CLAUDE.md` | `./CLAUDE.md` | Markdown |
+| Gemini CLI | `~/.gemini/GEMINI.md` | `./GEMINI.md` | Markdown |
+| Codex CLI | `~/.codex/AGENTS.md` | `./AGENTS.md` | Markdown |
+| OpenCode | `~/.config/opencode/AGENTS.md` | `./AGENTS.md` | Markdown |
+| Kiro CLI | `~/.kiro/steering/claude-instructions.md` | `.kiro/steering/claude-instructions.md` | Markdown + frontmatter |
+| Cursor | Not supported (SQLite) | `.cursor/rules/claude-instructions.mdc` | MDC (Markdown + frontmatter) |
 
 ## Limitations
 
