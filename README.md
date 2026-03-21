@@ -23,6 +23,25 @@ This tool lets you configure MCP servers and write instructions once in Claude C
 
 ## Quick Start
 
+### Option A: Claude Code Plugin (recommended)
+
+Use directly inside Claude Code with slash commands:
+
+```bash
+# Load the plugin for this session
+claude --plugin-dir /path/to/sync-agents-settings
+
+# Then use slash commands in the conversation:
+#   /sync-list          — list all MCP servers
+#   /sync               — sync MCP configs (with dry-run preview)
+#   /sync-diff           — compare configs between agents
+#   /sync-instructions   — sync CLAUDE.md to other agents
+```
+
+The plugin also includes a **sync-awareness skill** that automatically suggests syncing when you edit MCP settings or CLAUDE.md files.
+
+### Option B: CLI via npx
+
 No installation needed — just run with `npx`:
 
 ```bash
@@ -39,7 +58,7 @@ npx sync-agents-settings sync
 npx sync-agents-settings sync-instructions
 ```
 
-## Install (optional)
+### Option C: Global Install
 
 ```bash
 # Global install for the `sync-agents` command
@@ -341,6 +360,33 @@ Use `--no-backup` to skip. Target directories that don't exist (CLI not installe
 | OpenCode | `~/.config/opencode/AGENTS.md` | `./AGENTS.md` | Markdown |
 | Kiro CLI | `~/.kiro/steering/claude-instructions.md` | `.kiro/steering/claude-instructions.md` | Markdown + frontmatter |
 | Cursor | Not supported (SQLite) | `.cursor/rules/claude-instructions.mdc` | MDC (Markdown + frontmatter) |
+
+## Claude Code Plugin
+
+This project can be used as a Claude Code plugin, providing slash commands and a contextual skill directly inside Claude Code conversations.
+
+### Slash Commands
+
+| Command | Description |
+|---------|-------------|
+| `/sync` | Sync MCP server configs to other agents (with dry-run preview and confirmation) |
+| `/sync-list` | List all MCP servers configured in Claude Code |
+| `/sync-diff` | Compare MCP configs between Claude and other agents |
+| `/sync-instructions` | Sync CLAUDE.md instruction files to other agent formats |
+
+### Sync-Awareness Skill
+
+The plugin includes a skill that automatically detects when you're editing MCP settings (`.claude.json`, `.mcp.json`) or `CLAUDE.md` files, and suggests syncing to other agents.
+
+### Plugin Development
+
+```bash
+# Validate plugin structure
+claude plugins validate /path/to/sync-agents-settings
+
+# Test locally (loads plugin for this session only)
+claude --plugin-dir /path/to/sync-agents-settings
+```
 
 ## Limitations
 

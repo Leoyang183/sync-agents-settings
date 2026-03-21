@@ -19,6 +19,25 @@
 
 ## 快速開始
 
+### 方式 A：Claude Code Plugin（推薦）
+
+在 Claude Code 中直接使用 slash commands：
+
+```bash
+# 載入 plugin（僅本次 session 有效）
+claude --plugin-dir /path/to/sync-agents-settings
+
+# 在對話中使用 slash commands：
+#   /sync-list          — 列出所有 MCP servers
+#   /sync               — 同步 MCP 設定（含 dry-run 預覽）
+#   /sync-diff           — 比較各 agent 的設定差異
+#   /sync-instructions   — 同步 CLAUDE.md 到其他 agent
+```
+
+Plugin 還包含 **sync-awareness skill**，當你編輯 MCP 設定或 CLAUDE.md 時會自動建議同步。
+
+### 方式 B：透過 npx
+
 不需安裝，直接用 `npx`：
 
 ```bash
@@ -35,7 +54,7 @@ npx sync-agents-settings sync
 npx sync-agents-settings sync-instructions
 ```
 
-## 安裝（選用）
+### 方式 C：全域安裝
 
 ```bash
 # 全域安裝，使用 sync-agents 指令
@@ -157,6 +176,33 @@ sync-agents sync-instructions --dry-run
 | OpenCode | `~/.config/opencode/AGENTS.md` | `./AGENTS.md` | Markdown |
 | Kiro CLI | `~/.kiro/steering/claude-instructions.md` | `.kiro/steering/claude-instructions.md` | Markdown + frontmatter |
 | Cursor | 不支援（SQLite） | `.cursor/rules/claude-instructions.mdc` | MDC（Markdown + frontmatter） |
+
+## Claude Code Plugin
+
+本專案也可作為 Claude Code plugin 使用，在 Claude Code 對話中直接提供 slash commands 和情境感知 skill。
+
+### Slash Commands
+
+| 指令 | 說明 |
+|------|------|
+| `/sync` | 同步 MCP server 設定到其他 agent（含 dry-run 預覽和確認） |
+| `/sync-list` | 列出所有 Claude Code 中的 MCP servers |
+| `/sync-diff` | 比較 Claude 和其他 agent 之間的 MCP 設定差異 |
+| `/sync-instructions` | 同步 CLAUDE.md 指令檔到其他 agent 格式 |
+
+### Sync-Awareness Skill
+
+Plugin 包含一個 skill，會自動偵測你正在編輯 MCP 設定（`.claude.json`、`.mcp.json`）或 `CLAUDE.md` 檔案時，建議同步到其他 agent。
+
+### Plugin 開發
+
+```bash
+# 驗證 plugin 結構
+claude plugins validate /path/to/sync-agents-settings
+
+# 本地測試（僅載入此次 session）
+claude --plugin-dir /path/to/sync-agents-settings
+```
 
 ## 限制
 
