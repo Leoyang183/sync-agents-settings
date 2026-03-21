@@ -11,7 +11,10 @@
   "files": [
     "dist",
     "bin",
-    "!dist/__tests__"
+    "!dist/__tests__",
+    ".claude-plugin",
+    "commands",
+    "skills"
   ],
   "scripts": {
     "dev": "tsx src/cli.ts",

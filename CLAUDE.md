@@ -77,3 +77,7 @@ src/prompt.ts
 ## Publishing
 
 Published to npm as `sync-agents-settings`. The `bin` entry uses a CJS wrapper (`bin/sync-agents.cjs`) that dynamically imports the ESM `dist/cli.js` — this is required for `npx` compatibility with ESM packages.
+
+## Plugin
+
+This repo is also a Claude Code plugin. When bumping the version in `package.json`, also update `.claude-plugin/plugin.json` to match.
