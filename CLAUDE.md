@@ -49,13 +49,13 @@ Writers (src/writers/*.ts)
 
 **Writer patterns — three categories:**
 
-1. **Claude-format targets** (Kiro, Cursor): Use shared `claude-format.ts` — same `mcpServers` JSON format as Claude, just different file paths. Each writer is ~10 lines delegating to `writeClaudeFormat()`.
+1. **Claude-format targets** (Kiro, Cursor, Kimi): Use shared `claude-format.ts` — same `mcpServers` JSON format as Claude, just different file paths. Each writer is ~10 lines delegating to `writeClaudeFormat()`.
 
 2. **Custom JSON targets** (Gemini, OpenCode): Own writer with format-specific conversion (`httpUrl`, `type: "local"/"remote"`, `environment` vs `env`).
 
 3. **TOML target** (Codex): Converts JSON to TOML via `@iarna/toml`.
 
-**Adding a new target that uses Claude's format:** Create a one-liner writer like `kiro.ts`/`cursor.ts`, add path to `paths.ts`, add target name to `SyncTarget` union in `types.ts`, wire into `cli.ts` and `backup.ts`.
+**Adding a new target that uses Claude's format:** Create a one-liner writer like `kiro.ts`/`cursor.ts`/`kimi.ts`, add path to `paths.ts`, add target name to `SyncTarget` union in `types.ts`, wire into `cli.ts` and `backup.ts`.
 
 **Instruction sync (`sync-instructions` command):**
 
@@ -72,7 +72,7 @@ src/prompt.ts
 ```
 
 **Key modules:**
-- `src/env.ts` — `expandEnvVars()` resolves `${VAR:-default}` syntax for targets that don't support it (Codex, OpenCode, Kiro, Cursor)
+- `src/env.ts` — `expandEnvVars()` resolves `${VAR:-default}` syntax for targets that don't support it (Codex, OpenCode, Kiro, Cursor, Kimi)
 - `src/backup.ts` — copies all affected config files to `~/.sync-agents-backup/<timestamp>/` before writing
 - `src/paths.ts` — centralized config file paths for all targets (MCP + instruction paths)
 - `src/doctor.ts` — drift/health checker that compares Claude source MCP names against each target and reports missing/extra/unavailable/parse-error states

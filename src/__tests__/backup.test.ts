@@ -60,4 +60,9 @@ describe("getFilesToBackup", () => {
     expect(files).toContain("/custom/.codex/config.toml");
     expect(files).not.toContain(PATHS.codexConfig);
   });
+
+  it("includes kimi when targeted", () => {
+    const files = getFilesToBackup(["kimi"]);
+    expect(files).toContain(PATHS.kimiMcpConfig);
+  });
 });

@@ -8,7 +8,7 @@ Validate MCP server definitions from Claude Code against target agent capabiliti
 ## Arguments
 
 The user may pass target names: `/sync-validate codex opencode`
-If no targets are specified, validate all targets (gemini, codex, opencode, kiro, cursor).
+If no targets are specified, validate all targets (gemini, codex, opencode, kiro, cursor, kimi).
 
 Optional flags:
 - `--skip-oauth` — ignore OAuth-only servers from validation

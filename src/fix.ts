@@ -12,6 +12,7 @@ export interface AutoFixOptions {
   skipBackup?: boolean;
   skipOAuth?: boolean;
   codexHome?: string;
+  kimiHome?: string;
 }
 
 export interface AutoFixResult {
@@ -26,6 +27,7 @@ export function runAutoFix(options: AutoFixOptions): AutoFixResult {
     const doctor = runDoctor(options.targets, {
       skipOAuth: options.skipOAuth,
       codexHome: options.codexHome,
+      kimiHome: options.kimiHome,
     });
 
     if (doctor.hasErrors) {
@@ -40,6 +42,7 @@ export function runAutoFix(options: AutoFixOptions): AutoFixResult {
       skipBackup: options.skipBackup,
       skipOAuth: options.skipOAuth,
       codexHome: options.codexHome,
+      kimiHome: options.kimiHome,
     });
     const mapped = mapReconcileOutcome(reconcile.status);
     return {
@@ -70,6 +73,7 @@ export function runAutoFix(options: AutoFixOptions): AutoFixResult {
     skipBackup: options.skipBackup,
     skipOAuth: options.skipOAuth,
     codexHome: options.codexHome,
+    kimiHome: options.kimiHome,
   });
   const mapped = mapReconcileOutcome(reconcile.status);
   return {

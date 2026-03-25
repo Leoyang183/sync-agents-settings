@@ -8,6 +8,7 @@ import { writeToCodex, resolveCodexConfigPath } from "./writers/codex.js";
 import { writeToOpenCode } from "./writers/opencode.js";
 import { writeToKiro } from "./writers/kiro.js";
 import { writeToCursor } from "./writers/cursor.js";
+import { writeToKimi, resolveKimiMcpConfigPath } from "./writers/kimi.js";
 import { createBackup, getFilesToBackup } from "./backup.js";
 import { PATHS } from "./paths.js";
 import type { SyncTarget, UnifiedMcpServer } from "./types.js";
@@ -47,13 +48,18 @@ program
 program
   .command("sync")
   .description("Sync MCP settings from Claude Code to other CLIs")
-  .option("-t, --target <targets...>", "sync targets (gemini, codex, opencode, kiro, cursor)", [
-    "gemini",
-    "codex",
-    "opencode",
-    "kiro",
-    "cursor",
-  ])
+  .option(
+    "-t, --target <targets...>",
+    "sync targets (gemini, codex, opencode, kiro, cursor, kimi)",
+    [
+      "gemini",
+      "codex",
+      "opencode",
+      "kiro",
+      "cursor",
+      "kimi",
+    ]
+  )
   .option("--dry-run", "preview mode, no files will be written", false)
   .option("--no-backup", "skip backup")
   .option("--skip-oauth", "skip MCP servers that require OAuth", false)
@@ -61,6 +67,7 @@ program
     "--codex-home <path>",
     "Codex config directory (default: ~/.codex, or specify project-level .codex/)"
   )
+  .option("--kimi-home <path>", "Kimi config directory (default: ~/.kimi, or specify project-level .kimi/)")
   .option("--report <format>", "output format: text or json", "text")
   .option("-v, --verbose", "show detailed output", false)
   .action(async (opts) => {
@@ -70,6 +77,7 @@ program
     const verbose = opts.verbose as boolean;
     const skipOAuth = opts.skipOauth as boolean;
     const codexHome = opts.codexHome as string | undefined;
+    const kimiHome = opts.kimiHome as string | undefined;
     const reportFormat = opts.report as string;
     const jsonReport = reportFormat === "json";
 
@@ -118,11 +126,12 @@ program
 
     // 2. Backup
     const codexConfigPath = resolveCodexConfigPath(codexHome);
+    const kimiConfigPath = resolveKimiMcpConfigPath(kimiHome);
     if (!skipBackup && !dryRun) {
       if (!jsonReport) {
         console.log("💾 Backing up config files...");
       }
-      const backupDir = createBackup(getFilesToBackup(targets, codexConfigPath));
+      const backupDir = createBackup(getFilesToBackup(targets, codexConfigPath, kimiConfigPath));
       if (!jsonReport) {
         console.log(`  Backup directory: ${backupDir}\n`);
       }
@@ -175,6 +184,18 @@ program
         const result = writeToCursor(servers, dryRun);
         targetReports.push({ target, added: result.added, skipped: result.skipped });
         if (!jsonReport) {
+          printResult(result.added, result.skipped);
+        }
+      } else if (target === "kimi") {
+        const result = writeToKimi(servers, dryRun, kimiHome);
+        targetReports.push({
+          target,
+          added: result.added,
+          skipped: result.skipped,
+          configPath: result.configPath,
+        });
+        if (!jsonReport) {
+          console.log(`  Target: ${result.configPath}`);
           printResult(result.added, result.skipped);
         }
       }
@@ -248,12 +269,14 @@ program
   .description("Compare MCP settings between Claude Code and other CLIs")
   .option(
     "-t, --target <targets...>",
-    "comparison targets (gemini, codex, opencode, kiro, cursor)",
-    ["gemini", "codex", "opencode", "kiro", "cursor"]
+    "comparison targets (gemini, codex, opencode, kiro, cursor, kimi)",
+    ["gemini", "codex", "opencode", "kiro", "cursor", "kimi"]
   )
+  .option("--kimi-home <path>", "Kimi config directory (default: ~/.kimi, or specify project-level .kimi/)")
   .option("--report <format>", "output format: text or json", "text")
   .action((opts) => {
     const targets = opts.target as SyncTarget[];
+    const kimiHome = opts.kimiHome as string | undefined;
     const reportFormat = opts.report as string;
     const jsonReport = reportFormat === "json";
 
@@ -275,6 +298,7 @@ program
       opencode: { path: PATHS.openCodeConfig, key: "mcp" },
       kiro: { path: PATHS.kiroMcpConfig },
       cursor: { path: PATHS.cursorMcpConfig },
+      kimi: { path: resolveKimiMcpConfigPath(kimiHome) },
     };
     const targetReports: Array<{
       target: string;
@@ -334,8 +358,8 @@ program
   .description("Detect MCP config drift between Claude Code and target CLIs")
   .option(
     "-t, --target <targets...>",
-    "doctor targets (gemini, codex, opencode, kiro, cursor)",
-    ["gemini", "codex", "opencode", "kiro", "cursor"]
+    "doctor targets (gemini, codex, opencode, kiro, cursor, kimi)",
+    ["gemini", "codex", "opencode", "kiro", "cursor", "kimi"]
   )
   .option("--skip-oauth", "ignore OAuth-only Claude servers", false)
   .option("--fix", "auto-run reconcile when drift is detected", false)
@@ -346,6 +370,7 @@ program
     "--codex-home <path>",
     "Codex config directory (default: ~/.codex, or specify project-level .codex/)"
   )
+  .option("--kimi-home <path>", "Kimi config directory (default: ~/.kimi, or specify project-level .kimi/)")
   .action((opts) => {
     const targets = opts.target as SyncTarget[];
     const skipOAuth = opts.skipOauth as boolean;
@@ -354,6 +379,7 @@ program
     const skipBackup = !opts.backup;
     const reportFormat = opts.report as string;
     const codexHome = opts.codexHome as string | undefined;
+    const kimiHome = opts.kimiHome as string | undefined;
     const jsonReport = reportFormat === "json";
 
     if (reportFormat !== "text" && reportFormat !== "json") {
@@ -373,6 +399,7 @@ program
         skipBackup,
         skipOAuth,
         codexHome,
+        kimiHome,
       });
       if (fixed.status === "failed") {
         if (fixed.reason === "doctor_parse") {
@@ -392,7 +419,7 @@ program
       return;
     }
 
-    const report = runDoctor(targets, { skipOAuth, codexHome });
+    const report = runDoctor(targets, { skipOAuth, codexHome, kimiHome });
 
     if (jsonReport) {
       console.log(formatDoctorReport(report));
@@ -444,8 +471,8 @@ program
   .description("Validate MCP schema and target capability compatibility")
   .option(
     "-t, --target <targets...>",
-    "validation targets (gemini, codex, opencode, kiro, cursor)",
-    ["gemini", "codex", "opencode", "kiro", "cursor"]
+    "validation targets (gemini, codex, opencode, kiro, cursor, kimi)",
+    ["gemini", "codex", "opencode", "kiro", "cursor", "kimi"]
   )
   .option("--skip-oauth", "ignore OAuth-only Claude servers", false)
   .option("--fix", "auto-run reconcile after validation passes", false)
@@ -456,6 +483,7 @@ program
     "--codex-home <path>",
     "Codex config directory (used by --fix for reconcile)"
   )
+  .option("--kimi-home <path>", "Kimi config directory (used by --fix for reconcile)")
   .action((opts) => {
     const targets = opts.target as SyncTarget[];
     const skipOAuth = opts.skipOauth as boolean;
@@ -464,6 +492,7 @@ program
     const skipBackup = !opts.backup;
     const reportFormat = opts.report as string;
     const codexHome = opts.codexHome as string | undefined;
+    const kimiHome = opts.kimiHome as string | undefined;
     const jsonReport = reportFormat === "json";
 
     if (reportFormat !== "text" && reportFormat !== "json") {
@@ -529,6 +558,7 @@ program
         skipBackup,
         skipOAuth,
         codexHome,
+        kimiHome,
       });
       if (fixed.status === "failed") {
         if (fixed.reason === "doctor_parse") {
@@ -553,8 +583,8 @@ program
   .description("Validate + detect drift + sync only missing MCP servers")
   .option(
     "-t, --target <targets...>",
-    "reconcile targets (gemini, codex, opencode, kiro, cursor)",
-    ["gemini", "codex", "opencode", "kiro", "cursor"]
+    "reconcile targets (gemini, codex, opencode, kiro, cursor, kimi)",
+    ["gemini", "codex", "opencode", "kiro", "cursor", "kimi"]
   )
   .option("--dry-run", "preview mode, no files will be written", false)
   .option("--no-backup", "skip backup")
@@ -563,6 +593,7 @@ program
     "--codex-home <path>",
     "Codex config directory (default: ~/.codex, or specify project-level .codex/)"
   )
+  .option("--kimi-home <path>", "Kimi config directory (default: ~/.kimi, or specify project-level .kimi/)")
   .option("--report <format>", "output format: text or json", "text")
   .action((opts) => {
     const targets = opts.target as SyncTarget[];
@@ -570,6 +601,7 @@ program
     const skipBackup = !opts.backup;
     const skipOAuth = opts.skipOauth as boolean;
     const codexHome = opts.codexHome as string | undefined;
+    const kimiHome = opts.kimiHome as string | undefined;
     const reportFormat = opts.report as string;
     const jsonReport = reportFormat === "json";
 
@@ -582,7 +614,7 @@ program
       console.log("🔍 Dry-run mode — no files will be written\n");
     }
 
-    const result = reconcileTargets(targets, { dryRun, skipBackup, skipOAuth, codexHome });
+    const result = reconcileTargets(targets, { dryRun, skipBackup, skipOAuth, codexHome, kimiHome });
 
     if (jsonReport) {
       console.log(formatReconcileReport(result));
@@ -645,13 +677,18 @@ program
 program
   .command("sync-instructions")
   .description("Sync CLAUDE.md instruction files to other AI agent formats")
-  .option("-t, --target <targets...>", "sync targets (gemini, codex, opencode, kiro, cursor)", [
-    "gemini",
-    "codex",
-    "opencode",
-    "kiro",
-    "cursor",
-  ])
+  .option(
+    "-t, --target <targets...>",
+    "sync targets (gemini, codex, opencode, kiro, cursor, kimi)",
+    [
+      "gemini",
+      "codex",
+      "opencode",
+      "kiro",
+      "cursor",
+      "kimi",
+    ]
+  )
   .option("--global", "sync global config (~/.claude/CLAUDE.md)", false)
   .option(
     "--local",
@@ -858,7 +895,9 @@ function printResult(added: string[], skipped: string[]) {
 }
 
 function getTargetLabel(target: SyncTarget): string {
-  return target === "opencode" ? "OpenCode" : target.toUpperCase();
+  if (target === "opencode") return "OpenCode";
+  if (target === "kimi") return "Kimi";
+  return target.toUpperCase();
 }
 
 program.parse();

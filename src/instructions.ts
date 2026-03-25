@@ -4,7 +4,7 @@ import { homedir } from "node:os";
 import { PATHS } from "./paths.js";
 import { askConflictAction, type ConflictAction } from "./prompt.js";
 
-export type InstructionsTarget = "gemini" | "codex" | "opencode" | "kiro" | "cursor";
+export type InstructionsTarget = "gemini" | "codex" | "opencode" | "kiro" | "cursor" | "kimi";
 export type ImportMode = "inline" | "strip";
 
 interface SyncPair {
@@ -81,6 +81,12 @@ export function getGlobalSyncPairs(targets: InstructionsTarget[]): SyncPair[] {
         targetLabel: "Kiro CLI (~/.kiro/steering/claude-instructions.md)",
         transform: wrapForKiro,
       });
+    } else if (target === "kimi") {
+      pairs.push({
+        source: PATHS.claudeMdGlobal,
+        target: PATHS.kimiMdGlobal,
+        targetLabel: "Kimi CLI (~/.kimi/AGENTS.md)",
+      });
     }
     // Cursor global rules are stored in SQLite, not supported for global sync
   }
@@ -126,6 +132,13 @@ export function getLocalSyncPairs(targets: InstructionsTarget[], cwd: string): S
       const targetPath = resolve(cwd, "AGENTS.md");
       if (!seenPaths.has(targetPath)) {
         pairs.push({ source, target: targetPath, targetLabel: "OpenCode (./AGENTS.md)" });
+        seenPaths.add(targetPath);
+      }
+    } else if (target === "kimi") {
+      // Kimi reads ./AGENTS.md — shared path with Codex/OpenCode
+      const targetPath = resolve(cwd, "AGENTS.md");
+      if (!seenPaths.has(targetPath)) {
+        pairs.push({ source, target: targetPath, targetLabel: "Kimi CLI (./AGENTS.md)" });
         seenPaths.add(targetPath);
       }
     } else if (target === "kiro") {

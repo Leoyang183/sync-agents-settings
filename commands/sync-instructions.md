@@ -1,6 +1,6 @@
 ---
 name: sync-instructions
-description: Sync CLAUDE.md instruction files to other AI agents (Gemini, Codex, OpenCode, Kiro, Cursor)
+description: Sync CLAUDE.md instruction files to other AI agents (Gemini, Codex, OpenCode, Kiro, Cursor, Kimi)
 ---
 
 Sync CLAUDE.md instruction files from Claude Code format to other AI agent formats.

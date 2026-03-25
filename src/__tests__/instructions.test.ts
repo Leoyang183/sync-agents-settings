@@ -80,10 +80,17 @@ describe("getGlobalSyncPairs", () => {
     expect(pairs[0].transform).toBeDefined();
   });
 
-  it("returns all four pairs (cursor excluded from global)", () => {
-    const pairs = getGlobalSyncPairs(["gemini", "codex", "opencode", "kiro", "cursor"]);
-    // Cursor global is not supported (SQLite), so only 4 pairs
-    expect(pairs).toHaveLength(4);
+  it("returns kimi pair", () => {
+    const pairs = getGlobalSyncPairs(["kimi"]);
+    expect(pairs).toHaveLength(1);
+    expect(pairs[0].source).toBe(PATHS.claudeMdGlobal);
+    expect(pairs[0].target).toBe(PATHS.kimiMdGlobal);
+  });
+
+  it("returns all five pairs (cursor excluded from global)", () => {
+    const pairs = getGlobalSyncPairs(["gemini", "codex", "opencode", "kiro", "kimi", "cursor"]);
+    // Cursor global is not supported (SQLite), so only 5 pairs
+    expect(pairs).toHaveLength(5);
   });
 });
 
@@ -125,6 +132,12 @@ describe("getLocalSyncPairs", () => {
     expect(pairs[0].target).toBe("/projects/myapp/AGENTS.md");
   });
 
+  it("deduplicates AGENTS.md for codex, opencode, and kimi", () => {
+    const pairs = getLocalSyncPairs(["codex", "opencode", "kimi"], "/projects/myapp");
+    expect(pairs).toHaveLength(1);
+    expect(pairs[0].target).toBe("/projects/myapp/AGENTS.md");
+  });
+
   it("builds kiro pair with .kiro/steering/ path", () => {
     const pairs = getLocalSyncPairs(["kiro"], "/projects/myapp");
     expect(pairs).toHaveLength(1);
@@ -141,10 +154,10 @@ describe("getLocalSyncPairs", () => {
 
   it("builds all targets without duplicate AGENTS.md", () => {
     const pairs = getLocalSyncPairs(
-      ["gemini", "codex", "opencode", "kiro", "cursor"],
+      ["gemini", "codex", "opencode", "kiro", "cursor", "kimi"],
       "/projects/myapp"
     );
-    // gemini=GEMINI.md, codex=AGENTS.md, opencode=deduplicated, kiro=.kiro/steering/, cursor=.cursor/rules/
+    // gemini=GEMINI.md, codex=AGENTS.md, opencode=deduplicated, kimi=deduplicated, kiro=.kiro/steering/, cursor=.cursor/rules/
     expect(pairs).toHaveLength(4);
     const targets = pairs.map((p) => p.target);
     expect(targets).toContain("/projects/myapp/GEMINI.md");

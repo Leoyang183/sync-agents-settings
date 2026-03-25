@@ -22,6 +22,9 @@ export const PATHS = {
   // Kiro CLI
   kiroMcpConfig: join(HOME, ".kiro", "settings", "mcp.json"),
 
+  // Kimi CLI
+  kimiMcpConfig: join(HOME, ".kimi", "mcp.json"),
+
   // Cursor
   cursorMcpConfig: join(HOME, ".cursor", "mcp.json"),
 
@@ -31,6 +34,7 @@ export const PATHS = {
   codexMdGlobal: join(HOME, ".codex", "AGENTS.md"),
   openCodeMdGlobal: join(HOME, ".config", "opencode", "AGENTS.md"),
   kiroSteeringGlobal: join(HOME, ".kiro", "steering", "claude-instructions.md"),
+  kimiMdGlobal: join(HOME, ".kimi", "AGENTS.md"),
 
   // Backups
   backupDir: join(HOME, ".sync-agents-backup"),

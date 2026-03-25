@@ -5,6 +5,7 @@ import { PATHS } from "./paths.js";
 import { readClaudeMcpServers } from "./reader.js";
 import { isOAuthOnlyServer } from "./oauth.js";
 import { resolveCodexConfigPath } from "./writers/codex.js";
+import { resolveKimiMcpConfigPath } from "./writers/kimi.js";
 import type { SyncTarget } from "./types.js";
 
 type TargetStatus = "ok" | "drift" | "unavailable" | "error";
@@ -28,6 +29,7 @@ export interface DoctorReport {
 export interface DoctorOptions {
   skipOAuth?: boolean;
   codexHome?: string;
+  kimiHome?: string;
 }
 
 interface ReadNamesResult {
@@ -44,7 +46,7 @@ export function runDoctor(targets: SyncTarget[], options: DoctorOptions = {}): D
   let hasErrors = false;
 
   for (const target of targets) {
-    const readResult = readTargetNames(target, options.codexHome);
+    const readResult = readTargetNames(target, options.codexHome, options.kimiHome);
 
     if (readResult.status === "error") {
       hasErrors = true;
@@ -102,7 +104,7 @@ function getSourceNames(skipOAuth: boolean): string[] {
   return [...new Set(servers.map((server) => server.name))].sort();
 }
 
-function readTargetNames(target: SyncTarget, codexHome?: string): ReadNamesResult {
+function readTargetNames(target: SyncTarget, codexHome?: string, kimiHome?: string): ReadNamesResult {
   if (target === "codex") {
     const configPath = resolveCodexConfigPath(codexHome);
     const targetDir = dirname(configPath);
@@ -134,7 +136,7 @@ function readTargetNames(target: SyncTarget, codexHome?: string): ReadNamesResul
     }
   }
 
-  const targetConfig = getJsonTargetConfig(target);
+  const targetConfig = getJsonTargetConfig(target, kimiHome);
   const targetDir = dirname(targetConfig.path);
   if (!existsSync(targetDir)) {
     return {
@@ -165,7 +167,7 @@ function readTargetNames(target: SyncTarget, codexHome?: string): ReadNamesResul
   }
 }
 
-function getJsonTargetConfig(target: Exclude<SyncTarget, "codex">): {
+function getJsonTargetConfig(target: Exclude<SyncTarget, "codex">, kimiHome?: string): {
   path: string;
   key: "mcpServers" | "mcp";
 } {
@@ -177,6 +179,9 @@ function getJsonTargetConfig(target: Exclude<SyncTarget, "codex">): {
   }
   if (target === "kiro") {
     return { path: PATHS.kiroMcpConfig, key: "mcpServers" };
+  }
+  if (target === "kimi") {
+    return { path: resolveKimiMcpConfigPath(kimiHome), key: "mcpServers" };
   }
   return { path: PATHS.cursorMcpConfig, key: "mcpServers" };
 }

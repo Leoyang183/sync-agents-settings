@@ -1,6 +1,6 @@
 ---
 name: sync
-description: Sync MCP server configurations from Claude Code to other AI agents (Gemini, Codex, OpenCode, Kiro, Cursor)
+description: Sync MCP server configurations from Claude Code to other AI agents (Gemini, Codex, OpenCode, Kiro, Cursor, Kimi)
 ---
 
 Sync MCP server settings from Claude Code to other AI coding agents.
@@ -8,11 +8,13 @@ Sync MCP server settings from Claude Code to other AI coding agents.
 ## Arguments
 
 The user may pass target names after the command: `/sync gemini codex`
-If no targets specified, sync to all targets (gemini, codex, opencode, kiro, cursor).
+If no targets specified, sync to all targets (gemini, codex, opencode, kiro, cursor, kimi).
 
 The user may also pass flags:
 - `--skip-oauth` — skip MCP servers that require OAuth authentication
 - `--no-backup` — skip creating backup of target config files
+- `--codex-home <path>` — custom Codex config directory
+- `--kimi-home <path>` — custom Kimi config directory
 - `--report json` — output machine-readable JSON summary (CI-friendly)
 
 ## Execution Flow

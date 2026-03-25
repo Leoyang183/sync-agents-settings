@@ -13,12 +13,14 @@ import { writeToCodex, resolveCodexConfigPath } from "./writers/codex.js";
 import { writeToOpenCode } from "./writers/opencode.js";
 import { writeToKiro } from "./writers/kiro.js";
 import { writeToCursor } from "./writers/cursor.js";
+import { writeToKimi, resolveKimiMcpConfigPath } from "./writers/kimi.js";
 
 export interface ReconcileOptions {
   dryRun?: boolean;
   skipBackup?: boolean;
   skipOAuth?: boolean;
   codexHome?: string;
+  kimiHome?: string;
 }
 
 type ReconcileStatus = "validation_failed" | "doctor_failed" | "noop" | "reconciled";
@@ -53,7 +55,11 @@ export function reconcileTargets(targets: SyncTarget[], options: ReconcileOption
     };
   }
 
-  const doctor = runDoctor(targets, { skipOAuth: options.skipOAuth, codexHome: options.codexHome });
+  const doctor = runDoctor(targets, {
+    skipOAuth: options.skipOAuth,
+    codexHome: options.codexHome,
+    kimiHome: options.kimiHome,
+  });
   if (doctor.hasErrors) {
     return {
       status: "doctor_failed",
@@ -90,13 +96,20 @@ export function reconcileTargets(targets: SyncTarget[], options: ReconcileOption
   let backupDir: string | undefined;
   if (!options.dryRun && !options.skipBackup && targetsToSync.length > 0) {
     const codexConfigPath = resolveCodexConfigPath(options.codexHome);
-    backupDir = createBackup(getFilesToBackup(targetsToSync, codexConfigPath));
+    const kimiConfigPath = resolveKimiMcpConfigPath(options.kimiHome);
+    backupDir = createBackup(getFilesToBackup(targetsToSync, codexConfigPath, kimiConfigPath));
   }
 
   for (const result of doctor.results) {
     if (result.status !== "drift" || result.missing.length === 0) continue;
     const neededServers = plan.get(result.target) ?? [];
-    const writeResult = writeTarget(result.target, neededServers, Boolean(options.dryRun), options.codexHome);
+    const writeResult = writeTarget(
+      result.target,
+      neededServers,
+      Boolean(options.dryRun),
+      options.codexHome,
+      options.kimiHome
+    );
     syncResults.push({
       target: result.target,
       missing: result.missing,
@@ -118,7 +131,8 @@ function writeTarget(
   target: SyncTarget,
   servers: UnifiedMcpServer[],
   dryRun: boolean,
-  codexHome?: string
+  codexHome?: string,
+  kimiHome?: string
 ): { added: string[]; skipped: string[] } {
   if (target === "gemini") {
     return writeToGemini(servers, dryRun);
@@ -133,6 +147,10 @@ function writeTarget(
   if (target === "kiro") {
     return writeToKiro(servers, dryRun);
   }
+  if (target === "kimi") {
+    const { added, skipped } = writeToKimi(servers, dryRun, kimiHome);
+    return { added, skipped };
+  }
   return writeToCursor(servers, dryRun);
 }
 
@@ -145,6 +163,7 @@ export function groupValidationByTarget(
     codex: [],
     opencode: [],
     kiro: [],
+    kimi: [],
     cursor: [],
   };
   for (const target of targets) {

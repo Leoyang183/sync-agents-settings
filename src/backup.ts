@@ -28,7 +28,11 @@ export function createBackup(filePaths: string[]): string {
   return backupDir;
 }
 
-export function getFilesToBackup(targets: string[], codexConfigPath?: string): string[] {
+export function getFilesToBackup(
+  targets: string[],
+  codexConfigPath?: string,
+  kimiConfigPath?: string
+): string[] {
   const files = [PATHS.claudeJson, PATHS.claudeSettings];
 
   if (targets.includes("gemini")) {
@@ -42,6 +46,9 @@ export function getFilesToBackup(targets: string[], codexConfigPath?: string): s
   }
   if (targets.includes("kiro")) {
     files.push(PATHS.kiroMcpConfig);
+  }
+  if (targets.includes("kimi")) {
+    files.push(kimiConfigPath ?? PATHS.kimiMcpConfig);
   }
   if (targets.includes("cursor")) {
     files.push(PATHS.cursorMcpConfig);

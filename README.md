@@ -11,13 +11,13 @@
 [![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?logo=prettier)](https://prettier.io/)
 [![CI](https://github.com/Leoyang183/sync-agents-settings/actions/workflows/ci.yml/badge.svg)](https://github.com/Leoyang183/sync-agents-settings/actions/workflows/ci.yml)
 
-Sync MCP server configurations and instruction files (CLAUDE.md) from **Claude Code** to **Gemini CLI**, **Codex CLI**, **OpenCode**, **Kiro CLI**, and **Cursor**.
+Sync MCP server configurations and instruction files (CLAUDE.md) from **Claude Code** to **Gemini CLI**, **Codex CLI**, **OpenCode**, **Kiro CLI**, **Cursor**, and **Kimi CLI**.
 
 **README translations:** [🇹🇼 繁體中文](docs/i18n/README.zh-tw.md) | [🇨🇳 简体中文](docs/i18n/README.zh-cn.md) | [🇯🇵 日本語](docs/i18n/README.ja.md) | [🇰🇷 한국어](docs/i18n/README.ko.md)
 
 ## Why
 
-If you use Claude Code as your primary AI coding agent but also switch between other agents (Gemini CLI, Codex CLI, OpenCode, Kiro, Cursor) to take advantage of their free tiers or different models, you know the pain — every tool has its own MCP config format, and setting them up one by one is tedious. Same goes for instruction files — CLAUDE.md, GEMINI.md, AGENTS.md all need the same content but in different formats.
+If you use Claude Code as your primary AI coding agent but also switch between other agents (Gemini CLI, Codex CLI, OpenCode, Kiro, Cursor, Kimi CLI) to take advantage of their free tiers or different models, you know the pain — every tool has its own MCP config format, and setting them up one by one is tedious. Same goes for instruction files — CLAUDE.md, GEMINI.md, AGENTS.md all need the same content but in different formats.
 
 This tool lets you configure MCP servers and write instructions once in Claude Code, then sync everywhere with a single command.
 
@@ -82,9 +82,13 @@ sync-agents sync --target codex
 sync-agents sync --target opencode
 sync-agents sync --target kiro
 sync-agents sync --target cursor
+sync-agents sync --target kimi
 
 # Sync to Codex project-level config
 sync-agents sync --target codex --codex-home ./my-project/.codex
+
+# Sync to Kimi project-level config
+sync-agents sync --target kimi --kimi-home ./my-project/.kimi
 
 # Compare differences
 sync-agents diff
@@ -167,7 +171,7 @@ sync-agents sync-instructions --global
 sync-agents sync-instructions --local
 
 # Sync to specific targets
-sync-agents sync-instructions --target gemini codex
+sync-agents sync-instructions --target gemini codex kimi
 
 # Auto-overwrite without prompts (for CI)
 sync-agents sync-instructions --on-conflict overwrite
@@ -200,7 +204,8 @@ pnpm test            # Run tests
                      ├─→ Reader ─→ UnifiedMcpServer[] ─┼─→ OpenCode Writer ─→ ~/.config/opencode/opencode.json
 ~/.claude/plugins/ ──┘                            │
                                                  ├─→ Kiro Writer     ─→ ~/.kiro/settings/mcp.json
-                                                 └─→ Cursor Writer   ─→ ~/.cursor/mcp.json
+                                                 ├─→ Cursor Writer   ─→ ~/.cursor/mcp.json
+                                                 └─→ Kimi Writer     ─→ ~/.kimi/mcp.json
 ```
 
 | Stage | Description |
@@ -211,6 +216,7 @@ pnpm test            # Run tests
 | **OpenCode Writer** | JSON → JSON, `command`+`args` → merged `command` array, `env` → `environment`, `type: "local"`/`"remote"` |
 | **Kiro Writer** | Same format as Claude, `${VAR:-default}` → expanded |
 | **Cursor Writer** | Same format as Claude, `${VAR:-default}` → expanded |
+| **Kimi Writer** | Same format as Claude, `${VAR:-default}` → expanded |
 
 ### Instruction Sync (`sync-instructions`)
 
@@ -220,11 +226,12 @@ Syncs CLAUDE.md instruction files to each target's native format:
                                           ┌─→ ~/.gemini/GEMINI.md             (plain copy)
                                           ├─→ ~/.codex/AGENTS.md              (plain copy)
 ~/.claude/CLAUDE.md (+ ~/.claude/rules/*.md) ─→ expand @imports ──┼─→ ~/.config/opencode/AGENTS.md    (plain copy)
+                                          ├─→ ~/.kimi/AGENTS.md               (plain copy)
                                           ├─→ ~/.kiro/steering/claude-instructions.md  (+ inclusion: always)
                                           └─→ ⚠ Cursor global not supported  (SQLite)
 
                                           ┌─→ ./GEMINI.md                     (plain copy)
-                                          ├─→ ./AGENTS.md                     (Codex + OpenCode share)
+                                          ├─→ ./AGENTS.md                     (Codex + OpenCode + Kimi share)
 ./.claude/CLAUDE.md (fallback: ./CLAUDE.md) + ./.claude/rules/*.md ─→ expand @imports ──┼─→ .kiro/steering/claude-instructions.md    (+ inclusion: always)
                                           └─→ .cursor/rules/claude-instructions.mdc   (+ alwaysApply: true)
 ```
@@ -234,6 +241,7 @@ Syncs CLAUDE.md instruction files to each target's native format:
 | Gemini | `~/.gemini/GEMINI.md` | `./GEMINI.md` | Plain copy (expand standalone `@import` lines) |
 | Codex | `~/.codex/AGENTS.md` | `./AGENTS.md` | Plain copy (expand standalone `@import` lines) |
 | OpenCode | `~/.config/opencode/AGENTS.md` | `./AGENTS.md` (shared with Codex) | Plain copy (expand standalone `@import` lines) |
+| Kimi | `~/.kimi/AGENTS.md` | `./AGENTS.md` (shared with Codex/OpenCode) | Plain copy (expand standalone `@import` lines) |
 | Kiro | `~/.kiro/steering/claude-instructions.md` | `.kiro/steering/claude-instructions.md` | Add `inclusion: always` frontmatter |
 | Cursor | Not supported (SQLite) | `.cursor/rules/claude-instructions.mdc` | Add `alwaysApply: true` frontmatter |
 
@@ -242,6 +250,7 @@ Notes:
 - Extra rules in `.claude/rules/**/*.md` are appended automatically (unless already included via `@import`).
 - If a rule file has frontmatter `paths`, it is included only when at least one project file matches.
 - `@import` handling defaults to `inline` (expand). Use `--import-mode strip` to remove standalone import lines.
+- Kimi CLI currently loads `AGENTS.md` from the working directory. `~/.kimi/AGENTS.md` is synced as a reusable global template.
 
 When a target file already exists, you'll be prompted to choose: **overwrite**, **append** (keep existing + add CLAUDE.md below), or **skip**. Use `--on-conflict overwrite|append|skip` for non-interactive mode.
 
@@ -368,15 +377,21 @@ Writes to **`~/.cursor/mcp.json`** → `mcpServers` object.
 
 Same format as Claude Code. `${VAR:-default}` syntax in URLs is auto-expanded during sync.
 
+### Target: Kimi CLI
+
+Writes to **`~/.kimi/mcp.json`** by default. Use `--kimi-home <path>` to sync to a custom base directory (for example, project-level `.kimi/`).
+
+Same format as Claude Code. `${VAR:-default}` syntax in URLs is auto-expanded during sync.
+
 ## Transport Type Mapping
 
-| Claude Code | Gemini CLI | Codex CLI | OpenCode | Kiro CLI | Cursor |
-|------------|-----------|----------|----------|----------|--------|
-| `command` + `args` (stdio) | `command` + `args` | `command` + `args` | `type: "local"`, `command: [cmd, ...args]` | same as Claude | same as Claude |
-| `type: "http"` + `url` | `httpUrl` | `url` | `type: "remote"`, `url` | same as Claude | same as Claude |
-| `type: "sse"` + `url` | `url` | `url` | `type: "remote"`, `url` | same as Claude | same as Claude |
-| `env` | `env` | `env` | `environment` | `env` | `env` |
-| `oauth` | skipped | skipped | skipped | skipped | skipped |
+| Claude Code | Gemini CLI | Codex CLI | OpenCode | Kiro CLI | Cursor | Kimi CLI |
+|------------|-----------|----------|----------|----------|--------|----------|
+| `command` + `args` (stdio) | `command` + `args` | `command` + `args` | `type: "local"`, `command: [cmd, ...args]` | same as Claude | same as Claude | same as Claude |
+| `type: "http"` + `url` | `httpUrl` | `url` | `type: "remote"`, `url` | same as Claude | same as Claude | same as Claude |
+| `type: "sse"` + `url` | `url` | `url` | `type: "remote"`, `url` | same as Claude | same as Claude | same as Claude |
+| `env` | `env` | `env` | `environment` | `env` | `env` | `env` |
+| `oauth` | skipped | skipped | skipped | skipped | skipped | skipped |
 
 ## Backup
 
@@ -397,8 +412,10 @@ Every sync automatically backs up all affected config files to `~/.sync-agents-b
 ├── .kiro/
 │   └── settings/
 │       └── mcp.json              # ← ~/.kiro/settings/mcp.json
-└── .cursor/
-    └── mcp.json                  # ← ~/.cursor/mcp.json
+├── .cursor/
+│   └── mcp.json                  # ← ~/.cursor/mcp.json
+└── .kimi/
+    └── mcp.json                  # ← ~/.kimi/mcp.json
 ```
 
 Use `--no-backup` to skip. Target directories that don't exist (CLI not installed) will be skipped with a warning, not created.
@@ -421,6 +438,8 @@ Use `--no-backup` to skip. Target directories that don't exist (CLI not installe
 | Kiro CLI (project) | `.kiro/settings/mcp.json` in project root | JSON |
 | Cursor (global) | `~/.cursor/mcp.json` | JSON |
 | Cursor (project) | `.cursor/mcp.json` in project root | JSON |
+| Kimi CLI (global) | `~/.kimi/mcp.json` | JSON |
+| Kimi CLI (project) | `.kimi/mcp.json` (use `--kimi-home ./.kimi`) | JSON |
 
 ### Instruction Files
 
@@ -430,6 +449,7 @@ Use `--no-backup` to skip. Target directories that don't exist (CLI not installe
 | Gemini CLI | `~/.gemini/GEMINI.md` | `./GEMINI.md` | Markdown |
 | Codex CLI | `~/.codex/AGENTS.md` | `./AGENTS.md` | Markdown |
 | OpenCode | `~/.config/opencode/AGENTS.md` | `./AGENTS.md` | Markdown |
+| Kimi CLI | `~/.kimi/AGENTS.md` | `./AGENTS.md` | Markdown |
 | Kiro CLI | `~/.kiro/steering/claude-instructions.md` | `.kiro/steering/claude-instructions.md` | Markdown + frontmatter |
 | Cursor | Not supported (SQLite) | `.cursor/rules/claude-instructions.mdc` | MDC (Markdown + frontmatter) |
 

@@ -18,6 +18,7 @@ Optional flags:
 - `--no-backup` — skip backup before write
 - `--skip-oauth` — ignore OAuth-only servers
 - `--codex-home <path>` — custom Codex config directory
+- `--kimi-home <path>` — custom Kimi config directory
 - `--report json` — emit machine-readable JSON only (for CI)
 
 ## Execution Flow
