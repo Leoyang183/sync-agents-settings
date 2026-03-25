@@ -191,7 +191,12 @@ describe("formatDiffReport", () => {
       schemaVersion: number;
       command: string;
       sourceCount: number;
-      targets: Array<{ target: string; shared: string[]; onlyInSource: string[]; onlyInTarget: string[] }>;
+      targets: Array<{
+        target: string;
+        shared: string[];
+        onlyInSource: string[];
+        onlyInTarget: string[];
+      }>;
     };
 
     expect(payload.schemaVersion).toBe(1);

@@ -51,15 +51,7 @@ program
   .option(
     "-t, --target <targets...>",
     "sync targets (gemini, codex, opencode, kiro, cursor, kimi, aider)",
-    [
-      "gemini",
-      "codex",
-      "opencode",
-      "kiro",
-      "cursor",
-      "kimi",
-      "aider",
-    ]
+    ["gemini", "codex", "opencode", "kiro", "cursor", "kimi", "aider"]
   )
   .option("--dry-run", "preview mode, no files will be written", false)
   .option("--no-backup", "skip backup")
@@ -68,7 +60,10 @@ program
     "--codex-home <path>",
     "Codex config directory (default: ~/.codex, or specify project-level .codex/)"
   )
-  .option("--kimi-home <path>", "Kimi config directory (default: ~/.kimi, or specify project-level .kimi/)")
+  .option(
+    "--kimi-home <path>",
+    "Kimi config directory (default: ~/.kimi, or specify project-level .kimi/)"
+  )
   .option("--report <format>", "output format: text or json", "text")
   .option("-v, --verbose", "show detailed output", false)
   .action(async (opts) => {
@@ -273,7 +268,10 @@ program
     "comparison targets (gemini, codex, opencode, kiro, cursor, kimi)",
     ["gemini", "codex", "opencode", "kiro", "cursor", "kimi"]
   )
-  .option("--kimi-home <path>", "Kimi config directory (default: ~/.kimi, or specify project-level .kimi/)")
+  .option(
+    "--kimi-home <path>",
+    "Kimi config directory (default: ~/.kimi, or specify project-level .kimi/)"
+  )
   .option("--report <format>", "output format: text or json", "text")
   .action((opts) => {
     const targets = opts.target as SyncTarget[];
@@ -371,7 +369,10 @@ program
     "--codex-home <path>",
     "Codex config directory (default: ~/.codex, or specify project-level .codex/)"
   )
-  .option("--kimi-home <path>", "Kimi config directory (default: ~/.kimi, or specify project-level .kimi/)")
+  .option(
+    "--kimi-home <path>",
+    "Kimi config directory (default: ~/.kimi, or specify project-level .kimi/)"
+  )
   .action((opts) => {
     const targets = opts.target as SyncTarget[];
     const skipOAuth = opts.skipOauth as boolean;
@@ -390,7 +391,9 @@ program
 
     if (fix) {
       if (jsonReport) {
-        console.error("--report json is not supported with --fix for doctor. Use reconcile --report json.");
+        console.error(
+          "--report json is not supported with --fix for doctor. Use reconcile --report json."
+        );
         process.exit(1);
       }
       const fixed = runAutoFix({
@@ -404,7 +407,9 @@ program
       });
       if (fixed.status === "failed") {
         if (fixed.reason === "doctor_parse") {
-          console.error("❌ Auto-fix failed: target config parse error. Fix target config and retry.");
+          console.error(
+            "❌ Auto-fix failed: target config parse error. Fix target config and retry."
+          );
         } else if (fixed.reason === "validation") {
           console.error("❌ Auto-fix failed: validation errors detected.");
         } else {
@@ -480,10 +485,7 @@ program
   .option("--dry-run", "when used with --fix, preview without writing", false)
   .option("--no-backup", "when used with --fix, skip backup")
   .option("--report <format>", "output format: text or json", "text")
-  .option(
-    "--codex-home <path>",
-    "Codex config directory (used by --fix for reconcile)"
-  )
+  .option("--codex-home <path>", "Codex config directory (used by --fix for reconcile)")
   .option("--kimi-home <path>", "Kimi config directory (used by --fix for reconcile)")
   .action((opts) => {
     const targets = opts.target as SyncTarget[];
@@ -502,7 +504,9 @@ program
     }
 
     if (fix && jsonReport) {
-      console.error("--report json is not supported with --fix for validate. Use reconcile --report json.");
+      console.error(
+        "--report json is not supported with --fix for validate. Use reconcile --report json."
+      );
       process.exit(1);
     }
 
@@ -563,7 +567,9 @@ program
       });
       if (fixed.status === "failed") {
         if (fixed.reason === "doctor_parse") {
-          console.error("❌ Auto-fix failed: target config parse error. Fix target config and retry.");
+          console.error(
+            "❌ Auto-fix failed: target config parse error. Fix target config and retry."
+          );
         } else if (fixed.reason === "validation") {
           console.error("❌ Auto-fix failed: validation errors detected.");
         } else {
@@ -594,7 +600,10 @@ program
     "--codex-home <path>",
     "Codex config directory (default: ~/.codex, or specify project-level .codex/)"
   )
-  .option("--kimi-home <path>", "Kimi config directory (default: ~/.kimi, or specify project-level .kimi/)")
+  .option(
+    "--kimi-home <path>",
+    "Kimi config directory (default: ~/.kimi, or specify project-level .kimi/)"
+  )
   .option("--report <format>", "output format: text or json", "text")
   .action((opts) => {
     const targets = opts.target as SyncTarget[];
@@ -615,7 +624,13 @@ program
       console.log("🔍 Dry-run mode — no files will be written\n");
     }
 
-    const result = reconcileTargets(targets, { dryRun, skipBackup, skipOAuth, codexHome, kimiHome });
+    const result = reconcileTargets(targets, {
+      dryRun,
+      skipBackup,
+      skipOAuth,
+      codexHome,
+      kimiHome,
+    });
 
     if (jsonReport) {
       console.log(formatReconcileReport(result));
@@ -681,14 +696,7 @@ program
   .option(
     "-t, --target <targets...>",
     "sync targets (gemini, codex, opencode, kiro, cursor, kimi)",
-    [
-      "gemini",
-      "codex",
-      "opencode",
-      "kiro",
-      "cursor",
-      "kimi",
-    ]
+    ["gemini", "codex", "opencode", "kiro", "cursor", "kimi"]
   )
   .option("--global", "sync global config (~/.claude/CLAUDE.md)", false)
   .option(

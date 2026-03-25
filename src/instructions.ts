@@ -1,10 +1,24 @@
-import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, realpathSync } from "node:fs";
+import {
+  readFileSync,
+  writeFileSync,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  realpathSync,
+} from "node:fs";
 import { basename, dirname, resolve, relative } from "node:path";
 import { homedir } from "node:os";
 import { PATHS } from "./paths.js";
 import { askConflictAction, type ConflictAction } from "./prompt.js";
 
-export type InstructionsTarget = "gemini" | "codex" | "opencode" | "kiro" | "cursor" | "kimi" | "aider";
+export type InstructionsTarget =
+  | "gemini"
+  | "codex"
+  | "opencode"
+  | "kiro"
+  | "cursor"
+  | "kimi"
+  | "aider";
 export type ImportMode = "inline" | "strip";
 
 interface SyncPair {
@@ -446,7 +460,10 @@ function parseFrontmatterPaths(content: string): string[] | null {
     for (let j = i + 1; j < fm.length; j += 1) {
       const item = fm[j].trim();
       if (!item.startsWith("- ")) break;
-      const value = item.slice(2).trim().replace(/^['"]|['"]$/g, "");
+      const value = item
+        .slice(2)
+        .trim()
+        .replace(/^['"]|['"]$/g, "");
       if (value) paths.push(value);
       i = j;
     }
@@ -572,7 +589,9 @@ function loadSourceContentWithRules(
         continue;
       }
       const ruleLabel = relative(rulesDir, ruleFile);
-      parts.push(`<!-- Synced extra rule: ${ruleLabel} -->\n\n${stripExistingFrontmatter(ruleBody).trim()}`);
+      parts.push(
+        `<!-- Synced extra rule: ${ruleLabel} -->\n\n${stripExistingFrontmatter(ruleBody).trim()}`
+      );
     }
   }
 

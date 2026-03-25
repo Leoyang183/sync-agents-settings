@@ -40,7 +40,10 @@ export interface ReconcileResult {
   backupDir?: string;
 }
 
-export function reconcileTargets(targets: SyncTarget[], options: ReconcileOptions = {}): ReconcileResult {
+export function reconcileTargets(
+  targets: SyncTarget[],
+  options: ReconcileOptions = {}
+): ReconcileResult {
   let servers = readClaudeMcpServers();
   if (options.skipOAuth) {
     servers = servers.filter((server) => !isOAuthOnlyServer(server));
@@ -78,7 +81,9 @@ export function reconcileTargets(targets: SyncTarget[], options: ReconcileOption
     };
   }
 
-  const mapByName = new Map<string, UnifiedMcpServer>(servers.map((server) => [server.name, server]));
+  const mapByName = new Map<string, UnifiedMcpServer>(
+    servers.map((server) => [server.name, server])
+  );
   const targetsToSync: SyncTarget[] = [];
   const plan = new Map<SyncTarget, UnifiedMcpServer[]>();
   const syncResults: ReconcileTargetResult[] = [];

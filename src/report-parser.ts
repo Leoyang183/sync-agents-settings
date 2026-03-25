@@ -215,7 +215,10 @@ export const COMMAND_REQUIRED_FIELDS: Record<KnownReportCommand, RequiredFieldSp
   "sync-instructions": [{ field: "unsupportedGlobalTargets", type: "array" }],
 };
 
-export const COMMAND_PAYLOAD_VALIDATORS: Record<KnownReportCommand, (report: ParsedReport) => boolean> = {
+export const COMMAND_PAYLOAD_VALIDATORS: Record<
+  KnownReportCommand,
+  (report: ParsedReport) => boolean
+> = {
   sync: (report) => hasRequiredFields(report, COMMAND_REQUIRED_FIELDS.sync),
   diff: (report) => hasRequiredFields(report, COMMAND_REQUIRED_FIELDS.diff),
   doctor: (report) => hasRequiredFields(report, COMMAND_REQUIRED_FIELDS.doctor),

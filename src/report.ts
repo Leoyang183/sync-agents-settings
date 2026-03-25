@@ -99,7 +99,9 @@ export function formatValidationReport(report: ValidationReport): string {
   return JSON.stringify(payload, null, 2);
 }
 
-export function formatSyncReport(report: Omit<SyncReportPayload, "command" | "schemaVersion">): string {
+export function formatSyncReport(
+  report: Omit<SyncReportPayload, "command" | "schemaVersion">
+): string {
   const payload: SyncReportPayload = {
     schemaVersion: REPORT_SCHEMA_VERSION,
     command: "sync",
@@ -119,7 +121,9 @@ export function formatSyncInstructionsReport(
   return JSON.stringify(payload, null, 2);
 }
 
-export function formatDiffReport(report: Omit<DiffReportPayload, "command" | "schemaVersion">): string {
+export function formatDiffReport(
+  report: Omit<DiffReportPayload, "command" | "schemaVersion">
+): string {
   const payload: DiffReportPayload = {
     schemaVersion: REPORT_SCHEMA_VERSION,
     command: "diff",

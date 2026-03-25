@@ -42,7 +42,11 @@ function runCliAt(cwd: string, ...args: string[]): string {
   });
 }
 
-function runCliWithStatus(...args: string[]): { status: number | null; stdout: string; stderr: string } {
+function runCliWithStatus(...args: string[]): {
+  status: number | null;
+  stdout: string;
+  stderr: string;
+} {
   const result = spawnSync(TSX_BIN, [CLI_ENTRY, ...args], {
     encoding: "utf-8",
     env: {

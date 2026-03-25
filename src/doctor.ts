@@ -104,7 +104,11 @@ function getSourceNames(skipOAuth: boolean): string[] {
   return [...new Set(servers.map((server) => server.name))].sort();
 }
 
-function readTargetNames(target: SyncTarget, codexHome?: string, kimiHome?: string): ReadNamesResult {
+function readTargetNames(
+  target: SyncTarget,
+  codexHome?: string,
+  kimiHome?: string
+): ReadNamesResult {
   if (target === "codex") {
     const configPath = resolveCodexConfigPath(codexHome);
     const targetDir = dirname(configPath);
@@ -167,7 +171,10 @@ function readTargetNames(target: SyncTarget, codexHome?: string, kimiHome?: stri
   }
 }
 
-function getJsonTargetConfig(target: Exclude<SyncTarget, "codex">, kimiHome?: string): {
+function getJsonTargetConfig(
+  target: Exclude<SyncTarget, "codex">,
+  kimiHome?: string
+): {
   path: string;
   key: "mcpServers" | "mcp";
 } {

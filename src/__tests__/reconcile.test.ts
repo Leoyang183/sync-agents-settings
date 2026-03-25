@@ -45,7 +45,11 @@ beforeEach(() => {
   vi.clearAllMocks();
   mockValidateServersForTargets.mockReturnValue({ issues: [], errorCount: 0, warningCount: 0 });
   mockWriteToGemini.mockReturnValue({ added: [], skipped: [] });
-  mockWriteToCodex.mockReturnValue({ added: [], skipped: [], configPath: "/tmp/.codex/config.toml" });
+  mockWriteToCodex.mockReturnValue({
+    added: [],
+    skipped: [],
+    configPath: "/tmp/.codex/config.toml",
+  });
   mockWriteToOpenCode.mockReturnValue({ added: [], skipped: [] });
   mockWriteToKiro.mockReturnValue({ added: [], skipped: [] });
   mockWriteToCursor.mockReturnValue({ added: [], skipped: [] });
@@ -90,7 +94,10 @@ describe("reconcileTargets", () => {
       ],
     });
 
-    const result = reconcileTargets(["gemini", "codex"], { dryRun: true, codexHome: "/tmp/.codex" });
+    const result = reconcileTargets(["gemini", "codex"], {
+      dryRun: true,
+      codexHome: "/tmp/.codex",
+    });
 
     expect(result.status).toBe("reconciled");
     expect(mockWriteToGemini).toHaveBeenCalledWith(

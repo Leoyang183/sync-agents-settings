@@ -427,10 +427,9 @@ describe("syncInstructions", () => {
     });
     mockFs.mkdirSync.mockReturnValue(undefined as unknown as string);
 
-    await syncInstructions(
-      [{ source, target: "/dst/GEMINI.md", targetLabel: "Gemini" }],
-      { dryRun: false }
-    );
+    await syncInstructions([{ source, target: "/dst/GEMINI.md", targetLabel: "Gemini" }], {
+      dryRun: false,
+    });
 
     expect(written).toContain("DEPTH_1");
     expect(written).toContain("DEPTH_20");
