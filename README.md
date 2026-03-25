@@ -14,6 +14,7 @@
 Sync MCP server configurations and instruction files (CLAUDE.md) from **Claude Code** to **Gemini CLI**, **Codex CLI**, **OpenCode**, **Kiro CLI**, **Cursor**, and **Kimi CLI**.
 
 **README translations:** [🇹🇼 繁體中文](docs/i18n/README.zh-tw.md) | [🇨🇳 简体中文](docs/i18n/README.zh-cn.md) | [🇯🇵 日本語](docs/i18n/README.ja.md) | [🇰🇷 한국어](docs/i18n/README.ko.md)
+**Support matrix:** [CLI compatibility matrix](docs/compatibility-matrix.md)
 
 ## Why
 

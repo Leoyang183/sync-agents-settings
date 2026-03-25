@@ -10,6 +10,7 @@
 将 **Claude Code** 的 MCP server 配置和指令文件（CLAUDE.md）同步到 **Gemini CLI**、**Codex CLI**、**OpenCode**、**Kiro CLI**、**Cursor** 和 **Kimi CLI**。
 
 **其他语言：** [🇺🇸 English](../../README.md) | [🇹🇼 繁體中文](README.zh-tw.md) | [🇯🇵 日本語](README.ja.md) | [🇰🇷 한국어](README.ko.md)
+**支持矩阵：** [CLI 兼容性矩阵](../compatibility-matrix.md)
 
 ## 为什么需要这个工具
 

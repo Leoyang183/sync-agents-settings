@@ -10,6 +10,7 @@
 **Claude Code** の MCP サーバー設定と指示ファイル（CLAUDE.md）を **Gemini CLI**、**Codex CLI**、**OpenCode**、**Kiro CLI**、**Cursor**、**Kimi CLI** に同期します。
 
 **他の言語：** [🇺🇸 English](../../README.md) | [🇹🇼 繁體中文](README.zh-tw.md) | [🇨🇳 简体中文](README.zh-cn.md) | [🇰🇷 한국어](README.ko.md)
+**対応マトリクス：** [CLI 互換性マトリクス](../compatibility-matrix.md)
 
 ## なぜこのツールが必要か
 
