@@ -13,12 +13,12 @@
 
 Sync MCP server configurations and instruction files (CLAUDE.md) from **Claude Code** to **Gemini CLI**, **Codex CLI**, **OpenCode**, **Kiro CLI**, **Cursor**, **Kimi CLI**, and **Aider CLI**.
 
-**README translations:** [🇹🇼 繁體中文](docs/i18n/README.zh-tw.md) | [🇨🇳 简体中文](docs/i18n/README.zh-cn.md) | [🇯🇵 日本語](docs/i18n/README.ja.md) | [🇰🇷 한국어](docs/i18n/README.ko.md)
+**README translations:** [рџ‡№рџ‡ј з№Ѓй«”дё­ж–‡](docs/i18n/README.zh-tw.md) | [рџ‡Ёрџ‡і з®ЂдЅ“дё­ж–‡](docs/i18n/README.zh-cn.md) | [рџ‡Їрџ‡µ ж—Ґжњ¬иЄћ](docs/i18n/README.ja.md) | [рџ‡°рџ‡· н•њкµ­м–ґ](docs/i18n/README.ko.md)
 **Support matrix:** [CLI compatibility matrix](docs/compatibility-matrix.md)
 
 ## Why
 
-If you use Claude Code as your primary AI coding agent but also switch between other agents (Gemini CLI, Codex CLI, OpenCode, Kiro, Cursor, Kimi CLI) to take advantage of their free tiers or different models, you know the pain — every tool has its own MCP config format, and setting them up one by one is tedious. Same goes for instruction files — CLAUDE.md, GEMINI.md, AGENTS.md all need the same content but in different formats.
+If you use Claude Code as your primary AI coding agent but also switch between other agents (Gemini CLI, Codex CLI, OpenCode, Kiro, Cursor, Kimi CLI) to take advantage of their free tiers or different models, you know the pain вЂ” every tool has its own MCP config format, and setting them up one by one is tedious. Same goes for instruction files вЂ” CLAUDE.md, GEMINI.md, AGENTS.md all need the same content but in different formats.
 
 This tool lets you configure MCP servers and write instructions once in Claude Code, then sync everywhere with a single command.
 
@@ -33,21 +33,21 @@ Use directly inside Claude Code with slash commands:
 claude --plugin-dir /path/to/sync-agents-settings
 
 # Then use slash commands in the conversation:
-#   /sync-list          — list all MCP servers
-#   /sync               — sync MCP configs (with dry-run preview)
-#   /sync-diff           — compare configs between agents
-#   /sync-doctor         — detect config drift and parse errors
-#   /sync-validate       — validate schema and target capabilities
-#   /sync-reconcile      — validate + detect drift + sync only missing
-#   /report-schema       — print or write report JSON schema markdown
-#   /sync-instructions   — sync CLAUDE.md to other agents
+#   /sync-list          вЂ” list all MCP servers
+#   /sync               вЂ” sync MCP configs (with dry-run preview)
+#   /sync-diff           вЂ” compare configs between agents
+#   /sync-doctor         вЂ” detect config drift and parse errors
+#   /sync-validate       вЂ” validate schema and target capabilities
+#   /sync-reconcile      вЂ” validate + detect drift + sync only missing
+#   /report-schema       вЂ” print or write report JSON schema markdown
+#   /sync-instructions   вЂ” sync CLAUDE.md to other agents
 ```
 
 The plugin also includes a **sync-awareness skill** that automatically suggests syncing when you edit MCP settings or CLAUDE.md files.
 
 ### Option B: CLI via npx
 
-No installation needed — just run with `npx`:
+No installation needed вЂ” just run with `npx`:
 
 ```bash
 # List all MCP servers detected from Claude Code
@@ -162,7 +162,7 @@ sync-agents validate --target codex opencode --skip-oauth
 # Reconcile selected targets only
 sync-agents reconcile --target gemini codex
 
-# Sync instruction files (CLAUDE.md → GEMINI.md / AGENTS.md / Kiro steering / Cursor rules / Aider conventions)
+# Sync instruction files (CLAUDE.md в†’ GEMINI.md / AGENTS.md / Kiro steering / Cursor rules / Aider conventions)
 sync-agents sync-instructions
 
 # Sync only global instructions
@@ -202,42 +202,42 @@ pnpm test            # Run tests
 **Claude Code is the single source of truth** for MCP settings, synced to all supported targets.
 
 ```
-                                                 ┌─→ Gemini Writer   ─→ ~/.gemini/settings.json
-                                                 ├─→ Codex Writer    ─→ ~/.codex/config.toml
-~/.claude.json ─────┐                            │
-                     ├─→ Reader ─→ UnifiedMcpServer[] ─┼─→ OpenCode Writer ─→ ~/.config/opencode/opencode.json
-~/.claude/plugins/ ──┘                            │
-                                                 ├─→ Kiro Writer     ─→ ~/.kiro/settings/mcp.json
-                                                 ├─→ Cursor Writer   ─→ ~/.cursor/mcp.json
-                                                 └─→ Kimi Writer     ─→ ~/.kimi/mcp.json
+                                                 в”Њв”Ђв†’ Gemini Writer   в”Ђв†’ ~/.gemini/settings.json
+                                                 в”њв”Ђв†’ Codex Writer    в”Ђв†’ ~/.codex/config.toml
+~/.claude.json в”Ђв”Ђв”Ђв”Ђв”Ђв”ђ                            в”‚
+                     в”њв”Ђв†’ Reader в”Ђв†’ UnifiedMcpServer[] в”Ђв”јв”Ђв†’ OpenCode Writer в”Ђв†’ ~/.config/opencode/opencode.json
+~/.claude/plugins/ в”Ђв”Ђв”                            в”‚
+                                                 в”њв”Ђв†’ Kiro Writer     в”Ђв†’ ~/.kiro/settings/mcp.json
+                                                 в”њв”Ђв†’ Cursor Writer   в”Ђв†’ ~/.cursor/mcp.json
+                                                 в””в”Ђв†’ Kimi Writer     в”Ђв†’ ~/.kimi/mcp.json
 ```
 
 | Stage | Description |
 |-------|-------------|
 | **Reader** | Reads from `~/.claude.json` and enabled plugin `.mcp.json` files, merges into a unified format |
-| **Gemini Writer** | JSON → JSON, `type: "http"` → `httpUrl`, `${VAR}` → `$VAR` |
-| **Codex Writer** | JSON → TOML, `${VAR:-default}` → expanded to actual value (env value or fallback) |
-| **OpenCode Writer** | JSON → JSON, `command`+`args` → merged `command` array, `env` → `environment`, `type: "local"`/`"remote"` |
-| **Kiro Writer** | Same format as Claude, `${VAR:-default}` → expanded |
-| **Cursor Writer** | Same format as Claude, `${VAR:-default}` → expanded |
-| **Kimi Writer** | Same format as Claude, `${VAR:-default}` → expanded |
+| **Gemini Writer** | JSON в†’ JSON, `type: "http"` в†’ `httpUrl`, `${VAR}` в†’ `$VAR` |
+| **Codex Writer** | JSON в†’ TOML, `${VAR:-default}` в†’ expanded to actual value (env value or fallback) |
+| **OpenCode Writer** | JSON в†’ JSON, `command`+`args` в†’ merged `command` array, `env` в†’ `environment`, `type: "local"`/`"remote"` |
+| **Kiro Writer** | Same format as Claude, `${VAR:-default}` в†’ expanded |
+| **Cursor Writer** | Same format as Claude, `${VAR:-default}` в†’ expanded |
+| **Kimi Writer** | Same format as Claude, `${VAR:-default}` в†’ expanded |
 
 ### Instruction Sync (`sync-instructions`)
 
 Syncs CLAUDE.md instruction files to each target's native format:
 
 ```
-                                          ┌─→ ~/.gemini/GEMINI.md             (plain copy)
-                                          ├─→ ~/.codex/AGENTS.md              (plain copy)
-~/.claude/CLAUDE.md (+ ~/.claude/rules/*.md) ─→ expand @imports ──┼─→ ~/.config/opencode/AGENTS.md    (plain copy)
-                                          ├─→ ~/.kimi/AGENTS.md               (plain copy)
-                                          ├─→ ~/.kiro/steering/claude-instructions.md  (+ inclusion: always)
-                                          └─→ ⚠ Cursor global not supported  (SQLite)
+                                          в”Њв”Ђв†’ ~/.gemini/GEMINI.md             (plain copy)
+                                          в”њв”Ђв†’ ~/.codex/AGENTS.md              (plain copy)
+~/.claude/CLAUDE.md (+ ~/.claude/rules/*.md) в”Ђв†’ expand @imports в”Ђв”Ђв”јв”Ђв†’ ~/.config/opencode/AGENTS.md    (plain copy)
+                                          в”њв”Ђв†’ ~/.kimi/AGENTS.md               (plain copy)
+                                          в”њв”Ђв†’ ~/.kiro/steering/claude-instructions.md  (+ inclusion: always)
+                                          в””в”Ђв†’ вљ  Cursor global not supported  (SQLite)
 
-                                          ┌─→ ./GEMINI.md                     (plain copy)
-                                          ├─→ ./AGENTS.md                     (Codex + OpenCode + Kimi share)
-./.claude/CLAUDE.md (fallback: ./CLAUDE.md) + ./.claude/rules/*.md ─→ expand @imports ──┼─→ .kiro/steering/claude-instructions.md    (+ inclusion: always)
-                                          └─→ .cursor/rules/claude-instructions.mdc   (+ alwaysApply: true)
+                                          в”Њв”Ђв†’ ./GEMINI.md                     (plain copy)
+                                          в”њв”Ђв†’ ./AGENTS.md                     (Codex + OpenCode + Kimi share)
+./.claude/CLAUDE.md (fallback: ./CLAUDE.md) + ./.claude/rules/*.md в”Ђв†’ expand @imports в”Ђв”Ђв”јв”Ђв†’ .kiro/steering/claude-instructions.md    (+ inclusion: always)
+                                          в””в”Ђв†’ .cursor/rules/claude-instructions.mdc   (+ alwaysApply: true)
 ```
 
 | Target | Global | Local | Format Transform |
@@ -271,8 +271,8 @@ When a target file already exists, you'll be prompted to choose: **overwrite**, 
 
 Reads MCP servers from two sources:
 
-1. **`~/.claude.json`** → `mcpServers` object (user-configured servers)
-2. **`~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/.mcp.json`** → enabled plugin MCP servers (matched against `~/.claude/settings.json` `enabledPlugins`)
+1. **`~/.claude.json`** в†’ `mcpServers` object (user-configured servers)
+2. **`~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/.mcp.json`** в†’ enabled plugin MCP servers (matched against `~/.claude/settings.json` `enabledPlugins`)
 
 Claude Code has two `.mcp.json` formats:
 
@@ -284,15 +284,38 @@ Claude Code has two `.mcp.json` formats:
 { "mcpServers": { "sentry": { "type": "http", "url": "https://mcp.sentry.dev/mcp" } } }
 ```
 
+Because sync-agents-settings preserves stdio command entries, the Claude-side source can also be a firewall-wrapped MCP server:
+
+```json
+{
+  "mcpServers": {
+    "filesystem-safe": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-transport-firewall",
+        "--",
+        "npx",
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "."
+      ]
+    }
+  }
+}
+```
+
+More package-first launch patterns are documented at https://github.com/shleder/mcp-transport-firewall/blob/main/docs/CLIENT_CONFIGS.md.
+
 ### Target: Gemini CLI
 
-Writes to **`~/.gemini/settings.json`** → `mcpServers` object.
+Writes to **`~/.gemini/settings.json`** в†’ `mcpServers` object.
 
 Key format differences from Claude:
-- Claude `type: "http"` → Gemini `httpUrl`
-- Claude `type: "sse"` → Gemini `url`
-- Claude `command` (stdio) → Gemini `command` (same)
-- Env var syntax: Claude `${VAR}` → Gemini `$VAR` (auto-converted)
+- Claude `type: "http"` в†’ Gemini `httpUrl`
+- Claude `type: "sse"` в†’ Gemini `url`
+- Claude `command` (stdio) в†’ Gemini `command` (same)
+- Env var syntax: Claude `${VAR}` в†’ Gemini `$VAR` (auto-converted)
 
 ```jsonc
 // Gemini settings.json
@@ -341,7 +364,7 @@ args = ["n8n-mcp"]
 
 ### Target: OpenCode
 
-Writes to **`~/.config/opencode/opencode.json`** → `mcp` object.
+Writes to **`~/.config/opencode/opencode.json`** в†’ `mcp` object.
 
 Key format differences:
 - Root key is `mcp` (not `mcpServers`)
@@ -354,15 +377,15 @@ Key format differences:
 {
   "model": "anthropic/claude-sonnet-4-5",  // existing settings preserved
   "mcp": {
-    "context7": {                          // stdio → local
+    "context7": {                          // stdio в†’ local
       "type": "local",
       "command": ["npx", "-y", "@upstash/context7-mcp"]
     },
-    "sentry": {                            // http → remote
+    "sentry": {                            // http в†’ remote
       "type": "remote",
       "url": "https://mcp.sentry.dev/mcp"
     },
-    "n8n-mcp": {                           // env → environment
+    "n8n-mcp": {                           // env в†’ environment
       "type": "local",
       "command": ["npx", "n8n-mcp"],
       "environment": {
@@ -375,13 +398,13 @@ Key format differences:
 
 ### Target: Kiro CLI
 
-Writes to **`~/.kiro/settings/mcp.json`** → `mcpServers` object.
+Writes to **`~/.kiro/settings/mcp.json`** в†’ `mcpServers` object.
 
 Same format as Claude Code. `${VAR:-default}` syntax in URLs is auto-expanded during sync.
 
 ### Target: Cursor
 
-Writes to **`~/.cursor/mcp.json`** → `mcpServers` object.
+Writes to **`~/.cursor/mcp.json`** в†’ `mcpServers` object.
 
 Same format as Claude Code. `${VAR:-default}` syntax in URLs is auto-expanded during sync.
 
@@ -407,23 +430,23 @@ Every sync automatically backs up all affected config files to `~/.sync-agents-b
 
 ```
 ~/.sync-agents-backup/2026-03-20T00-06-08-042Z/
-├── .claude.json                  # ← ~/.claude.json
-├── .claude/
-│   └── settings.json             # ← ~/.claude/settings.json
-├── .gemini/
-│   └── settings.json             # ← ~/.gemini/settings.json
-├── .codex/
-│   └── config.toml               # ← ~/.codex/config.toml
-├── .config/
-│   └── opencode/
-│       └── opencode.json         # ← ~/.config/opencode/opencode.json
-├── .kiro/
-│   └── settings/
-│       └── mcp.json              # ← ~/.kiro/settings/mcp.json
-├── .cursor/
-│   └── mcp.json                  # ← ~/.cursor/mcp.json
-└── .kimi/
-    └── mcp.json                  # ← ~/.kimi/mcp.json
+в”њв”Ђв”Ђ .claude.json                  # в†ђ ~/.claude.json
+в”њв”Ђв”Ђ .claude/
+в”‚   в””в”Ђв”Ђ settings.json             # в†ђ ~/.claude/settings.json
+в”њв”Ђв”Ђ .gemini/
+в”‚   в””в”Ђв”Ђ settings.json             # в†ђ ~/.gemini/settings.json
+в”њв”Ђв”Ђ .codex/
+в”‚   в””в”Ђв”Ђ config.toml               # в†ђ ~/.codex/config.toml
+в”њв”Ђв”Ђ .config/
+в”‚   в””в”Ђв”Ђ opencode/
+в”‚       в””в”Ђв”Ђ opencode.json         # в†ђ ~/.config/opencode/opencode.json
+в”њв”Ђв”Ђ .kiro/
+в”‚   в””в”Ђв”Ђ settings/
+в”‚       в””в”Ђв”Ђ mcp.json              # в†ђ ~/.kiro/settings/mcp.json
+в”њв”Ђв”Ђ .cursor/
+в”‚   в””в”Ђв”Ђ mcp.json                  # в†ђ ~/.cursor/mcp.json
+в””в”Ђв”Ђ .kimi/
+    в””в”Ђв”Ђ mcp.json                  # в†ђ ~/.kimi/mcp.json
 ```
 
 Use `--no-backup` to skip. Target directories that don't exist (CLI not installed) will be skipped with a warning, not created.
@@ -490,11 +513,11 @@ claude --plugin-dir /path/to/sync-agents-settings
 
 ## Limitations
 
-- **OAuth servers** (e.g. Slack with `oauth.clientId`) are synced as URL-only — you'll need to authenticate manually in each CLI
+- **OAuth servers** (e.g. Slack with `oauth.clientId`) are synced as URL-only вЂ” you'll need to authenticate manually in each CLI
 - **`${CLAUDE_PLUGIN_ROOT}`** env vars won't resolve in other CLIs
-- Codex CLI doesn't support `${VAR:-default}` syntax in URLs — these are auto-expanded during sync (env value if set, otherwise the default)
+- Codex CLI doesn't support `${VAR:-default}` syntax in URLs вЂ” these are auto-expanded during sync (env value if set, otherwise the default)
 - Re-running sync will **not overwrite** existing entries (safe to run multiple times)
-- Codex CLI does NOT merge global and project configs — when `.codex/` exists in a project, global `~/.codex/` is ignored
+- Codex CLI does NOT merge global and project configs вЂ” when `.codex/` exists in a project, global `~/.codex/` is ignored
 - If target config directories don't exist, sync will skip that target (won't create directories)
 
 ## Star History
