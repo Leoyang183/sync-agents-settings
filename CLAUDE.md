@@ -49,7 +49,7 @@ Writers (src/writers/*.ts)
 
 **Writer patterns — three categories:**
 
-1. **Claude-format targets** (Kiro, Cursor, Kimi): Use shared `claude-format.ts` — same `mcpServers` JSON format as Claude, just different file paths. Each writer is ~10 lines delegating to `writeClaudeFormat()`.
+1. **Claude-format targets** (Kiro, Cursor, Kimi, Cline): Use shared `claude-format.ts` — same `mcpServers` JSON format as Claude, just different file paths. Each writer is ~10 lines delegating to `writeClaudeFormat()`. Cline config lives at `~/.cline/data/settings/cline_mcp_settings.json`.
 
 2. **Custom JSON targets** (Gemini, OpenCode, Qwen Code, Amp): Own writer with format-specific conversion (`httpUrl`, `type: "local"/"remote"`, `environment` vs `env`). Qwen Code follows the Gemini pattern (settings.json with embedded `mcpServers`, `httpUrl` for HTTP, `$VAR` env syntax). Amp uses `"amp.mcpServers"` as the JSON key (dotted key) and `${VAR}` env syntax (same as Claude, no conversion needed).
 

@@ -131,4 +131,5 @@ export type SyncTarget =
   | "kimi"
   | "vibe"
   | "qwen"
-  | "amp";
+  | "amp"
+  | "cline";

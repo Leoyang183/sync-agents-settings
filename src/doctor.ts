@@ -9,6 +9,7 @@ import { resolveKimiMcpConfigPath } from "./writers/kimi.js";
 import { resolveVibeConfigPath } from "./writers/vibe.js";
 import { resolveQwenSettingsPath } from "./writers/qwen.js";
 import { resolveAmpSettingsPath } from "./writers/amp.js";
+import { resolveClineMcpConfigPath } from "./writers/cline.js";
 import type { SyncTarget } from "./types.js";
 
 type TargetStatus = "ok" | "drift" | "unavailable" | "error";
@@ -36,6 +37,7 @@ export interface DoctorOptions {
   vibeHome?: string;
   qwenHome?: string;
   ampHome?: string;
+  clineHome?: string;
 }
 
 interface ReadNamesResult {
@@ -58,7 +60,8 @@ export function runDoctor(targets: SyncTarget[], options: DoctorOptions = {}): D
       options.kimiHome,
       options.vibeHome,
       options.qwenHome,
-      options.ampHome
+      options.ampHome,
+      options.clineHome
     );
 
     if (readResult.status === "error") {
@@ -123,7 +126,8 @@ function readTargetNames(
   kimiHome?: string,
   vibeHome?: string,
   qwenHome?: string,
-  ampHome?: string
+  ampHome?: string,
+  clineHome?: string
 ): ReadNamesResult {
   if (target === "vibe") {
     return readTomlTargetNames(resolveVibeConfigPath(vibeHome), (parsed) => {
@@ -139,7 +143,7 @@ function readTargetNames(
     });
   }
 
-  const targetConfig = getJsonTargetConfig(target, kimiHome, qwenHome, ampHome);
+  const targetConfig = getJsonTargetConfig(target, kimiHome, qwenHome, ampHome, clineHome);
   const targetDir = dirname(targetConfig.path);
   if (!existsSync(targetDir)) {
     return {
@@ -174,7 +178,8 @@ function getJsonTargetConfig(
   target: Exclude<SyncTarget, "codex">,
   kimiHome?: string,
   qwenHome?: string,
-  ampHome?: string
+  ampHome?: string,
+  clineHome?: string
 ): {
   path: string;
   key: string;
@@ -196,6 +201,9 @@ function getJsonTargetConfig(
   }
   if (target === "amp") {
     return { path: resolveAmpSettingsPath(ampHome), key: "amp.mcpServers" };
+  }
+  if (target === "cline") {
+    return { path: resolveClineMcpConfigPath(clineHome), key: "mcpServers" };
   }
   return { path: PATHS.cursorMcpConfig, key: "mcpServers" };
 }

@@ -17,6 +17,7 @@ import { writeToKimi, resolveKimiMcpConfigPath } from "./writers/kimi.js";
 import { writeToVibe, resolveVibeConfigPath } from "./writers/vibe.js";
 import { writeToQwen, resolveQwenSettingsPath } from "./writers/qwen.js";
 import { writeToAmp, resolveAmpSettingsPath } from "./writers/amp.js";
+import { writeToCline, resolveClineMcpConfigPath } from "./writers/cline.js";
 
 export interface ReconcileOptions {
   dryRun?: boolean;
@@ -28,6 +29,7 @@ export interface ReconcileOptions {
   vibeHome?: string;
   qwenHome?: string;
   ampHome?: string;
+  clineHome?: string;
 }
 
 type ReconcileStatus = "validation_failed" | "doctor_failed" | "noop" | "reconciled";
@@ -76,6 +78,7 @@ export function reconcileTargets(
     vibeHome: options.vibeHome,
     qwenHome: options.qwenHome,
     ampHome: options.ampHome,
+    clineHome: options.clineHome,
   });
   if (doctor.hasErrors) {
     return {
@@ -119,6 +122,7 @@ export function reconcileTargets(
     const vibeConfigPath = resolveVibeConfigPath(options.vibeHome);
     const qwenConfigPath = resolveQwenSettingsPath(options.qwenHome);
     const ampConfigPath = resolveAmpSettingsPath(options.ampHome);
+    const clineConfigPath = resolveClineMcpConfigPath(options.clineHome);
     backupDir = createBackup(
       getFilesToBackup(
         targetsToSync,
@@ -126,7 +130,8 @@ export function reconcileTargets(
         kimiConfigPath,
         vibeConfigPath,
         qwenConfigPath,
-        ampConfigPath
+        ampConfigPath,
+        clineConfigPath
       )
     );
   }
@@ -142,7 +147,8 @@ export function reconcileTargets(
       options.kimiHome,
       options.vibeHome,
       options.qwenHome,
-      options.ampHome
+      options.ampHome,
+      options.clineHome
     );
     syncResults.push({
       target: result.target,
@@ -169,7 +175,8 @@ function writeTarget(
   kimiHome?: string,
   vibeHome?: string,
   qwenHome?: string,
-  ampHome?: string
+  ampHome?: string,
+  clineHome?: string
 ): { added: string[]; skipped: string[] } {
   if (target === "gemini") {
     return writeToGemini(servers, dryRun);
@@ -200,6 +207,10 @@ function writeTarget(
     const { added, skipped } = writeToAmp(servers, dryRun, ampHome);
     return { added, skipped };
   }
+  if (target === "cline") {
+    const { added, skipped } = writeToCline(servers, dryRun, clineHome);
+    return { added, skipped };
+  }
   return writeToCursor(servers, dryRun);
 }
 
@@ -217,6 +228,7 @@ export function groupValidationByTarget(
     vibe: [],
     qwen: [],
     amp: [],
+    cline: [],
   };
   for (const target of targets) {
     grouped[target] ??= [];

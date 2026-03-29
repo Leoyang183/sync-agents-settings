@@ -21,6 +21,7 @@ export type InstructionsTarget =
   | "vibe"
   | "qwen"
   | "amp"
+  | "cline"
   | "aider";
 export type ImportMode = "inline" | "strip";
 

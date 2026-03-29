@@ -35,7 +35,8 @@ export function getFilesToBackup(
   kimiConfigPath?: string,
   vibeConfigPath?: string,
   qwenConfigPath?: string,
-  ampConfigPath?: string
+  ampConfigPath?: string,
+  clineConfigPath?: string
 ): string[] {
   const files = [PATHS.claudeJson, PATHS.claudeSettings];
 
@@ -65,6 +66,9 @@ export function getFilesToBackup(
   }
   if (targets.includes("amp")) {
     files.push(ampConfigPath ?? PATHS.ampSettings);
+  }
+  if (targets.includes("cline")) {
+    files.push(clineConfigPath ?? PATHS.clineMcpConfig);
   }
 
   return files;

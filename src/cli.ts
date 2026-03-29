@@ -12,6 +12,7 @@ import { writeToKimi, resolveKimiMcpConfigPath } from "./writers/kimi.js";
 import { writeToVibe, resolveVibeConfigPath } from "./writers/vibe.js";
 import { writeToQwen, resolveQwenSettingsPath } from "./writers/qwen.js";
 import { writeToAmp, resolveAmpSettingsPath } from "./writers/amp.js";
+import { writeToCline, resolveClineMcpConfigPath } from "./writers/cline.js";
 import { createBackup, getFilesToBackup } from "./backup.js";
 import { PATHS } from "./paths.js";
 import type { SyncTarget, UnifiedMcpServer } from "./types.js";
@@ -55,8 +56,20 @@ program
   .description("Sync MCP settings from Claude Code to other CLIs")
   .option(
     "-t, --target <targets...>",
-    "sync targets (gemini, codex, opencode, kiro, cursor, kimi, vibe, qwen, amp, aider)",
-    ["gemini", "codex", "opencode", "kiro", "cursor", "kimi", "vibe", "qwen", "amp", "aider"]
+    "sync targets (gemini, codex, opencode, kiro, cursor, kimi, vibe, qwen, amp, cline, aider)",
+    [
+      "gemini",
+      "codex",
+      "opencode",
+      "kiro",
+      "cursor",
+      "kimi",
+      "vibe",
+      "qwen",
+      "amp",
+      "cline",
+      "aider",
+    ]
   )
   .option("--dry-run", "preview mode, no files will be written", false)
   .option("--no-backup", "skip backup")
@@ -82,6 +95,10 @@ program
     "--amp-home <path>",
     "Amp config directory (default: ~/.config/amp, or specify project-level .amp/)"
   )
+  .option(
+    "--cline-home <path>",
+    "Cline config directory (default: ~/.cline, or specify project-level .cline/)"
+  )
   .option("--report <format>", "output format: text or json", "text")
   .option("-v, --verbose", "show detailed output", false)
   .action(async (opts) => {
@@ -96,6 +113,7 @@ program
     const vibeHome = opts.vibeHome as string | undefined;
     const qwenHome = opts.qwenHome as string | undefined;
     const ampHome = opts.ampHome as string | undefined;
+    const clineHome = opts.clineHome as string | undefined;
     const reportFormat = opts.report as string;
     const jsonReport = reportFormat === "json";
 
@@ -153,6 +171,7 @@ program
     const vibeConfigPath = resolveVibeConfigPath(vibeHome);
     const qwenConfigPath = resolveQwenSettingsPath(qwenHome);
     const ampConfigPath = resolveAmpSettingsPath(ampHome);
+    const clineConfigPath = resolveClineMcpConfigPath(clineHome);
     if (!skipBackup && !dryRun) {
       if (!jsonReport) {
         console.log("💾 Backing up config files...");
@@ -164,7 +183,8 @@ program
           kimiConfigPath,
           vibeConfigPath,
           qwenConfigPath,
-          ampConfigPath
+          ampConfigPath,
+          clineConfigPath
         )
       );
       if (!jsonReport) {
@@ -269,6 +289,18 @@ program
           console.log(`  Target: ${result.configPath}`);
           printResult(result.added, result.skipped);
         }
+      } else if (target === "cline") {
+        const result = writeToCline(servers, dryRun, clineHome);
+        targetReports.push({
+          target,
+          added: result.added,
+          skipped: result.skipped,
+          configPath: result.configPath,
+        });
+        if (!jsonReport) {
+          console.log(`  Target: ${result.configPath}`);
+          printResult(result.added, result.skipped);
+        }
       }
       if (!jsonReport) {
         console.log();
@@ -340,8 +372,8 @@ program
   .description("Compare MCP settings between Claude Code and other CLIs")
   .option(
     "-t, --target <targets...>",
-    "comparison targets (gemini, codex, opencode, kiro, cursor, kimi, vibe, qwen, amp)",
-    ["gemini", "codex", "opencode", "kiro", "cursor", "kimi", "vibe", "qwen", "amp"]
+    "comparison targets (gemini, codex, opencode, kiro, cursor, kimi, vibe, qwen, amp, cline)",
+    ["gemini", "codex", "opencode", "kiro", "cursor", "kimi", "vibe", "qwen", "amp", "cline"]
   )
   .option(
     "--kimi-home <path>",
@@ -355,12 +387,17 @@ program
     "--amp-home <path>",
     "Amp config directory (default: ~/.config/amp, or specify project-level .amp/)"
   )
+  .option(
+    "--cline-home <path>",
+    "Cline config directory (default: ~/.cline, or specify project-level .cline/)"
+  )
   .option("--report <format>", "output format: text or json", "text")
   .action((opts) => {
     const targets = opts.target as SyncTarget[];
     const kimiHome = opts.kimiHome as string | undefined;
     const qwenHome = opts.qwenHome as string | undefined;
     const ampHome = opts.ampHome as string | undefined;
+    const clineHome = opts.clineHome as string | undefined;
     const reportFormat = opts.report as string;
     const jsonReport = reportFormat === "json";
 
@@ -385,6 +422,7 @@ program
       kimi: { path: resolveKimiMcpConfigPath(kimiHome) },
       qwen: { path: resolveQwenSettingsPath(qwenHome) },
       amp: { path: resolveAmpSettingsPath(ampHome), key: "amp.mcpServers" },
+      cline: { path: resolveClineMcpConfigPath(clineHome) },
     };
     const targetReports: Array<{
       target: string;
@@ -456,8 +494,8 @@ program
   .description("Detect MCP config drift between Claude Code and target CLIs")
   .option(
     "-t, --target <targets...>",
-    "doctor targets (gemini, codex, opencode, kiro, cursor, kimi, vibe, qwen, amp)",
-    ["gemini", "codex", "opencode", "kiro", "cursor", "kimi", "vibe", "qwen", "amp"]
+    "doctor targets (gemini, codex, opencode, kiro, cursor, kimi, vibe, qwen, amp, cline)",
+    ["gemini", "codex", "opencode", "kiro", "cursor", "kimi", "vibe", "qwen", "amp", "cline"]
   )
   .option("--skip-oauth", "ignore OAuth-only Claude servers", false)
   .option("--fix", "auto-run reconcile when drift is detected", false)
@@ -484,6 +522,10 @@ program
     "--amp-home <path>",
     "Amp config directory (default: ~/.config/amp, or specify project-level .amp/)"
   )
+  .option(
+    "--cline-home <path>",
+    "Cline config directory (default: ~/.cline, or specify project-level .cline/)"
+  )
   .action((opts) => {
     const targets = opts.target as SyncTarget[];
     const skipOAuth = opts.skipOauth as boolean;
@@ -496,6 +538,7 @@ program
     const vibeHome = opts.vibeHome as string | undefined;
     const qwenHome = opts.qwenHome as string | undefined;
     const ampHome = opts.ampHome as string | undefined;
+    const clineHome = opts.clineHome as string | undefined;
     const jsonReport = reportFormat === "json";
 
     if (reportFormat !== "text" && reportFormat !== "json") {
@@ -521,6 +564,7 @@ program
         vibeHome,
         qwenHome,
         ampHome,
+        clineHome,
       });
       if (fixed.status === "failed") {
         if (fixed.reason === "doctor_parse") {
@@ -549,6 +593,7 @@ program
       vibeHome,
       qwenHome,
       ampHome,
+      clineHome,
     });
 
     if (jsonReport) {
@@ -601,8 +646,8 @@ program
   .description("Validate MCP schema and target capability compatibility")
   .option(
     "-t, --target <targets...>",
-    "validation targets (gemini, codex, opencode, kiro, cursor, kimi, vibe, qwen, amp)",
-    ["gemini", "codex", "opencode", "kiro", "cursor", "kimi", "vibe", "qwen", "amp"]
+    "validation targets (gemini, codex, opencode, kiro, cursor, kimi, vibe, qwen, amp, cline)",
+    ["gemini", "codex", "opencode", "kiro", "cursor", "kimi", "vibe", "qwen", "amp", "cline"]
   )
   .option("--skip-oauth", "ignore OAuth-only Claude servers", false)
   .option("--fix", "auto-run reconcile after validation passes", false)
@@ -614,6 +659,7 @@ program
   .option("--vibe-home <path>", "Vibe config directory (used by --fix for reconcile)")
   .option("--qwen-home <path>", "Qwen config directory (used by --fix for reconcile)")
   .option("--amp-home <path>", "Amp config directory (used by --fix for reconcile)")
+  .option("--cline-home <path>", "Cline config directory (used by --fix for reconcile)")
   .action((opts) => {
     const targets = opts.target as SyncTarget[];
     const skipOAuth = opts.skipOauth as boolean;
@@ -626,6 +672,7 @@ program
     const vibeHome = opts.vibeHome as string | undefined;
     const qwenHome = opts.qwenHome as string | undefined;
     const ampHome = opts.ampHome as string | undefined;
+    const clineHome = opts.clineHome as string | undefined;
     const jsonReport = reportFormat === "json";
 
     if (reportFormat !== "text" && reportFormat !== "json") {
@@ -697,6 +744,7 @@ program
         vibeHome,
         qwenHome,
         ampHome,
+        clineHome,
       });
       if (fixed.status === "failed") {
         if (fixed.reason === "doctor_parse") {
@@ -723,8 +771,8 @@ program
   .description("Validate + detect drift + sync only missing MCP servers")
   .option(
     "-t, --target <targets...>",
-    "reconcile targets (gemini, codex, opencode, kiro, cursor, kimi, vibe, qwen, amp)",
-    ["gemini", "codex", "opencode", "kiro", "cursor", "kimi", "vibe", "qwen", "amp"]
+    "reconcile targets (gemini, codex, opencode, kiro, cursor, kimi, vibe, qwen, amp, cline)",
+    ["gemini", "codex", "opencode", "kiro", "cursor", "kimi", "vibe", "qwen", "amp", "cline"]
   )
   .option("--dry-run", "preview mode, no files will be written", false)
   .option("--no-backup", "skip backup")
@@ -750,6 +798,10 @@ program
     "--amp-home <path>",
     "Amp config directory (default: ~/.config/amp, or specify project-level .amp/)"
   )
+  .option(
+    "--cline-home <path>",
+    "Cline config directory (default: ~/.cline, or specify project-level .cline/)"
+  )
   .option("--report <format>", "output format: text or json", "text")
   .action((opts) => {
     const targets = opts.target as SyncTarget[];
@@ -762,6 +814,7 @@ program
     const vibeHome = opts.vibeHome as string | undefined;
     const qwenHome = opts.qwenHome as string | undefined;
     const ampHome = opts.ampHome as string | undefined;
+    const clineHome = opts.clineHome as string | undefined;
     const reportFormat = opts.report as string;
     const jsonReport = reportFormat === "json";
 
@@ -784,6 +837,7 @@ program
       vibeHome,
       qwenHome,
       ampHome,
+      clineHome,
     });
 
     if (jsonReport) {
@@ -849,8 +903,8 @@ program
   .description("Sync CLAUDE.md instruction files to other AI agent formats")
   .option(
     "-t, --target <targets...>",
-    "sync targets (gemini, codex, opencode, kiro, cursor, kimi, vibe, qwen, amp)",
-    ["gemini", "codex", "opencode", "kiro", "cursor", "kimi", "vibe", "qwen", "amp"]
+    "sync targets (gemini, codex, opencode, kiro, cursor, kimi, vibe, qwen, amp, cline)",
+    ["gemini", "codex", "opencode", "kiro", "cursor", "kimi", "vibe", "qwen", "amp", "cline"]
   )
   .option("--global", "sync global config (~/.claude/CLAUDE.md)", false)
   .option(
@@ -1076,6 +1130,7 @@ function getTargetLabel(target: SyncTarget): string {
   if (target === "vibe") return "Vibe";
   if (target === "qwen") return "Qwen";
   if (target === "amp") return "Amp";
+  if (target === "cline") return "Cline";
   return target.toUpperCase();
 }
 

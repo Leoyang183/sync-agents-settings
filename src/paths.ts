@@ -38,6 +38,9 @@ export const PATHS = {
   // Amp (Sourcegraph)
   ampSettings: join(HOME, ".config", "amp", "settings.json"),
 
+  // Cline CLI
+  clineMcpConfig: join(HOME, ".cline", "data", "settings", "cline_mcp_settings.json"),
+
   // Instructions (global)
   claudeMdGlobal: join(HOME, ".claude", "CLAUDE.md"),
   geminiMdGlobal: join(HOME, ".gemini", "GEMINI.md"),
