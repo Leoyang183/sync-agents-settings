@@ -48,9 +48,9 @@ const program = new Command();
 program
   .name("sync-agents")
   .description(
-    "Sync Claude Code MCP settings to Gemini CLI / Codex CLI / OpenCode / Kiro CLI / Vibe CLI / Qwen Code"
+    "Sync Claude Code MCP settings to Gemini CLI / Codex CLI / OpenCode / Kiro / Cursor / Kimi / Vibe / Qwen Code / Amp / Cline / Windsurf"
   )
-  .version("0.4.3");
+  .version("0.5.0");
 
 program
   .command("sync")

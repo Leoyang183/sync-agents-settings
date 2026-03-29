@@ -7,8 +7,8 @@
     {
       "name": "sync-agents-settings",
       "source": "./",
-      "description": "Sync MCP server configs and instructions from Claude Code to other AI agents (Gemini, Codex, Cursor, Kiro, OpenCode, Kimi, Vibe, Aider)",
-      "version": "0.4.3",
+      "description": "Sync MCP server configs and instructions from Claude Code to other AI agents (Gemini, Codex, Cursor, Kiro, OpenCode, Kimi, Vibe, Qwen, Amp, Cline, Windsurf, Aider)",
+      "version": "0.5.0",
       "author": {
         "name": "Leoyang183"
       },

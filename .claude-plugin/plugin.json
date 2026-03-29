@@ -1,7 +1,7 @@
 {
   "name": "sync-agents-settings",
-  "version": "0.4.3",
-  "description": "Sync MCP server configs and instructions from Claude Code to other AI agents (Gemini, Codex, Cursor, Kiro, OpenCode, Kimi, Vibe)",
+  "version": "0.5.0",
+  "description": "Sync MCP server configs and instructions from Claude Code to other AI agents (Gemini, Codex, Cursor, Kiro, OpenCode, Kimi, Vibe, Qwen, Amp, Cline, Windsurf)",
   "repository": "https://github.com/Leoyang183/sync-agents-settings",
   "author": {
     "name": "Leoyang183"
