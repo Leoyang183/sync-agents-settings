@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, copyFileSync } from "node:fs";
+import { existsSync, mkdirSync, copyFileSync, chmodSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { homedir } from "node:os";
 import { PATHS } from "./paths.js";
@@ -14,8 +14,9 @@ export function createBackup(filePaths: string[]): string {
       // Preserve original path structure relative to home
       const relativePath = filePath.startsWith(home) ? filePath.slice(home.length + 1) : filePath;
       const dest = join(backupDir, relativePath);
-      mkdirSync(dirname(dest), { recursive: true });
+      mkdirSync(dirname(dest), { recursive: true, mode: 0o700 });
       copyFileSync(filePath, dest);
+      chmodSync(dest, 0o600);
       backedUp++;
       console.log(`  Backed up: ${filePath}`);
     }
@@ -31,7 +32,8 @@ export function createBackup(filePaths: string[]): string {
 export function getFilesToBackup(
   targets: string[],
   codexConfigPath?: string,
-  kimiConfigPath?: string
+  kimiConfigPath?: string,
+  vibeConfigPath?: string
 ): string[] {
   const files = [PATHS.claudeJson, PATHS.claudeSettings];
 
@@ -52,6 +54,9 @@ export function getFilesToBackup(
   }
   if (targets.includes("cursor")) {
     files.push(PATHS.cursorMcpConfig);
+  }
+  if (targets.includes("vibe")) {
+    files.push(vibeConfigPath ?? PATHS.vibeConfig);
   }
 
   return files;

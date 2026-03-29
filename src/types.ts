@@ -91,4 +91,4 @@ export interface UnifiedMcpServer {
 
 // ===== Sync Options =====
 
-export type SyncTarget = "gemini" | "codex" | "opencode" | "kiro" | "cursor" | "kimi";
+export type SyncTarget = "gemini" | "codex" | "opencode" | "kiro" | "cursor" | "kimi" | "vibe";

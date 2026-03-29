@@ -53,7 +53,7 @@ Writers (src/writers/*.ts)
 
 2. **Custom JSON targets** (Gemini, OpenCode): Own writer with format-specific conversion (`httpUrl`, `type: "local"/"remote"`, `environment` vs `env`).
 
-3. **TOML target** (Codex): Converts JSON to TOML via `@iarna/toml`.
+3. **TOML targets** (Codex, Vibe): Convert JSON to TOML via `@iarna/toml`. Codex uses `[mcp_servers.<name>]` (table-per-key), Vibe uses `[[mcp_servers]]` (array-of-tables with `name` + `transport` fields).
 
 **Adding a new target that uses Claude's format:** Create a one-liner writer like `kiro.ts`/`cursor.ts`/`kimi.ts`, add path to `paths.ts`, add target name to `SyncTarget` union in `types.ts`, wire into `cli.ts` and `backup.ts`.
 

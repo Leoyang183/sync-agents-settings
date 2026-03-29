@@ -11,14 +11,14 @@
 [![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?logo=prettier)](https://prettier.io/)
 [![CI](https://github.com/Leoyang183/sync-agents-settings/actions/workflows/ci.yml/badge.svg)](https://github.com/Leoyang183/sync-agents-settings/actions/workflows/ci.yml)
 
-Sync MCP server configurations and instruction files (CLAUDE.md) from **Claude Code** to **Gemini CLI**, **Codex CLI**, **OpenCode**, **Kiro CLI**, **Cursor**, **Kimi CLI**, and **Aider CLI**.
+Sync MCP server configurations and instruction files (CLAUDE.md) from **Claude Code** to **Gemini CLI**, **Codex CLI**, **OpenCode**, **Kiro CLI**, **Cursor**, **Kimi CLI**, **Vibe CLI** (Mistral), and **Aider CLI**.
 
 **README translations:** [🇹🇼 繁體中文](docs/i18n/README.zh-tw.md) | [🇨🇳 简体中文](docs/i18n/README.zh-cn.md) | [🇯🇵 日本語](docs/i18n/README.ja.md) | [🇰🇷 한국어](docs/i18n/README.ko.md)
 **Support matrix:** [CLI compatibility matrix](docs/compatibility-matrix.md)
 
 ## Why
 
-If you use Claude Code as your primary AI coding agent but also switch between other agents (Gemini CLI, Codex CLI, OpenCode, Kiro, Cursor, Kimi CLI) to take advantage of their free tiers or different models, you know the pain — every tool has its own MCP config format, and setting them up one by one is tedious. Same goes for instruction files — CLAUDE.md, GEMINI.md, AGENTS.md all need the same content but in different formats.
+If you use Claude Code as your primary AI coding agent but also switch between other agents (Gemini CLI, Codex CLI, OpenCode, Kiro, Cursor, Kimi CLI, Vibe CLI) to take advantage of their free tiers or different models, you know the pain — every tool has its own MCP config format, and setting them up one by one is tedious. Same goes for instruction files — CLAUDE.md, GEMINI.md, AGENTS.md all need the same content but in different formats.
 
 This tool lets you configure MCP servers and write instructions once in Claude Code, then sync everywhere with a single command.
 
@@ -87,6 +87,7 @@ sync-agents sync --target opencode
 sync-agents sync --target kiro
 sync-agents sync --target cursor
 sync-agents sync --target kimi
+sync-agents sync --target vibe
 
 # Sync to Codex project-level config
 sync-agents sync --target codex --codex-home ./my-project/.codex
@@ -175,7 +176,7 @@ sync-agents sync-instructions --global
 sync-agents sync-instructions --local
 
 # Sync to specific targets
-sync-agents sync-instructions --target gemini codex kimi aider
+sync-agents sync-instructions --target gemini codex kimi vibe aider
 
 # Auto-overwrite without prompts (for CI)
 sync-agents sync-instructions --on-conflict overwrite
@@ -212,7 +213,8 @@ pnpm test            # Run tests
 ~/.claude/plugins/ ──┘                            │
                                                  ├─→ Kiro Writer     ─→ ~/.kiro/settings/mcp.json
                                                  ├─→ Cursor Writer   ─→ ~/.cursor/mcp.json
-                                                 └─→ Kimi Writer     ─→ ~/.kimi/mcp.json
+                                                 ├─→ Kimi Writer     ─→ ~/.kimi/mcp.json
+                                                 └─→ Vibe Writer     ─→ ~/.vibe/config.toml
 ```
 
 | Stage | Description |
@@ -224,6 +226,7 @@ pnpm test            # Run tests
 | **Kiro Writer** | Same format as Claude, `${VAR:-default}` → expanded |
 | **Cursor Writer** | Same format as Claude, `${VAR:-default}` → expanded |
 | **Kimi Writer** | Same format as Claude, `${VAR:-default}` → expanded |
+| **Vibe Writer** | JSON → TOML `[[mcp_servers]]` array-of-tables, explicit `transport` field, `${VAR:-default}` → expanded |
 
 ### Instruction Sync (`sync-instructions`)
 
@@ -234,11 +237,12 @@ Syncs CLAUDE.md instruction files to each target's native format:
                                           ├─→ ~/.codex/AGENTS.md              (plain copy)
 ~/.claude/CLAUDE.md (+ ~/.claude/rules/*.md) ─→ expand @imports ──┼─→ ~/.config/opencode/AGENTS.md    (plain copy)
                                           ├─→ ~/.kimi/AGENTS.md               (plain copy)
+                                          ├─→ ~/.vibe/AGENTS.md               (plain copy)
                                           ├─→ ~/.kiro/steering/claude-instructions.md  (+ inclusion: always)
                                           └─→ ⚠ Cursor global not supported  (SQLite)
 
                                           ┌─→ ./GEMINI.md                     (plain copy)
-                                          ├─→ ./AGENTS.md                     (Codex + OpenCode + Kimi share)
+                                          ├─→ ./AGENTS.md                     (Codex + OpenCode + Kimi + Vibe share)
 ./.claude/CLAUDE.md (fallback: ./CLAUDE.md) + ./.claude/rules/*.md ─→ expand @imports ──┼─→ .kiro/steering/claude-instructions.md    (+ inclusion: always)
                                           └─→ .cursor/rules/claude-instructions.mdc   (+ alwaysApply: true)
 ```
@@ -248,7 +252,8 @@ Syncs CLAUDE.md instruction files to each target's native format:
 | Gemini | `~/.gemini/GEMINI.md` | `./GEMINI.md` | Plain copy (expand standalone `@import` lines) |
 | Codex | `~/.codex/AGENTS.md` | `./AGENTS.md` | Plain copy (expand standalone `@import` lines) |
 | OpenCode | `~/.config/opencode/AGENTS.md` | `./AGENTS.md` (shared with Codex) | Plain copy (expand standalone `@import` lines) |
-| Kimi | `~/.kimi/AGENTS.md` | `./AGENTS.md` (shared with Codex/OpenCode) | Plain copy (expand standalone `@import` lines) |
+| Kimi | `~/.kimi/AGENTS.md` | `./AGENTS.md` (shared with Codex/OpenCode/Vibe) | Plain copy (expand standalone `@import` lines) |
+| Vibe | `~/.vibe/AGENTS.md` | `./AGENTS.md` (shared with Codex/OpenCode/Kimi) | Plain copy (expand standalone `@import` lines) |
 | Aider | `~/.aider/CONVENTIONS.md` | `.aider/CONVENTIONS.md` | Plain copy + upsert `read` entry in `.aider.conf.yml` |
 | Kiro | `~/.kiro/steering/claude-instructions.md` | `.kiro/steering/claude-instructions.md` | Add `inclusion: always` frontmatter |
 | Cursor | Not supported (SQLite) | `.cursor/rules/claude-instructions.mdc` | Add `alwaysApply: true` frontmatter |
@@ -394,15 +399,38 @@ Writes to **`~/.kimi/mcp.json`** by default. Use `--kimi-home <path>` to sync to
 
 Same format as Claude Code. `${VAR:-default}` syntax in URLs is auto-expanded during sync.
 
+### Target: Vibe CLI (Mistral)
+
+Writes to **`~/.vibe/config.toml`** by default. Use `--vibe-home <path>` to sync to a custom base directory (for example, project-level `.vibe/`).
+
+Key format differences:
+- Uses TOML `[[mcp_servers]]` (array of tables) — each entry has a `name` and explicit `transport` field
+- Claude `"http"` → Vibe `"streamable-http"`, Claude `"sse"` → Vibe `"http"`
+- `command` is a string (not array), `env` is a TOML sub-table
+- `${VAR:-default}` syntax in URLs is auto-expanded during sync
+
+```toml
+[[mcp_servers]]
+name = "context7"
+transport = "stdio"
+command = "npx"
+args = ["-y", "@upstash/context7-mcp"]
+
+[[mcp_servers]]
+name = "supabase"
+transport = "streamable-http"
+url = "https://mcp.supabase.com/mcp"
+```
+
 ## Transport Type Mapping
 
-| Claude Code | Gemini CLI | Codex CLI | OpenCode | Kiro CLI | Cursor | Kimi CLI |
-|------------|-----------|----------|----------|----------|--------|----------|
-| `command` + `args` (stdio) | `command` + `args` | `command` + `args` | `type: "local"`, `command: [cmd, ...args]` | same as Claude | same as Claude | same as Claude |
-| `type: "http"` + `url` | `httpUrl` | `url` | `type: "remote"`, `url` | same as Claude | same as Claude | same as Claude |
-| `type: "sse"` + `url` | `url` | `url` | `type: "remote"`, `url` | same as Claude | same as Claude | same as Claude |
-| `env` | `env` | `env` | `environment` | `env` | `env` | `env` |
-| `oauth` | skipped | skipped | skipped | skipped | skipped | skipped |
+| Claude Code | Gemini CLI | Codex CLI | OpenCode | Kiro CLI | Cursor | Kimi CLI | Vibe CLI |
+|------------|-----------|----------|----------|----------|--------|----------|----------|
+| `command` + `args` (stdio) | `command` + `args` | `command` + `args` | `type: "local"`, `command: [cmd, ...args]` | same as Claude | same as Claude | same as Claude | `transport: "stdio"`, `command` + `args` + `name` |
+| `type: "http"` + `url` | `httpUrl` | `url` | `type: "remote"`, `url` | same as Claude | same as Claude | same as Claude | `transport: "streamable-http"`, `url` + `name` |
+| `type: "sse"` + `url` | `url` | `url` | `type: "remote"`, `url` | same as Claude | same as Claude | same as Claude | `transport: "http"`, `url` + `name` |
+| `env` | `env` | `env` | `environment` | `env` | `env` | `env` | `env` |
+| `oauth` | skipped | skipped | skipped | skipped | skipped | skipped | skipped |
 
 ## Backup
 
@@ -425,8 +453,10 @@ Every sync automatically backs up all affected config files to `~/.sync-agents-b
 │       └── mcp.json              # ← ~/.kiro/settings/mcp.json
 ├── .cursor/
 │   └── mcp.json                  # ← ~/.cursor/mcp.json
-└── .kimi/
-    └── mcp.json                  # ← ~/.kimi/mcp.json
+├── .kimi/
+│   └── mcp.json                  # ← ~/.kimi/mcp.json
+└── .vibe/
+    └── config.toml               # ← ~/.vibe/config.toml
 ```
 
 Use `--no-backup` to skip. Target directories that don't exist (CLI not installed) will be skipped with a warning, not created.
@@ -451,6 +481,8 @@ Use `--no-backup` to skip. Target directories that don't exist (CLI not installe
 | Cursor (project) | `.cursor/mcp.json` in project root | JSON |
 | Kimi CLI (global) | `~/.kimi/mcp.json` | JSON |
 | Kimi CLI (project) | `.kimi/mcp.json` (use `--kimi-home ./.kimi`) | JSON |
+| Vibe CLI (global) | `~/.vibe/config.toml` | TOML |
+| Vibe CLI (project) | `.vibe/config.toml` (use `--vibe-home ./.vibe`) | TOML |
 
 ### Instruction Files
 
@@ -461,6 +493,7 @@ Use `--no-backup` to skip. Target directories that don't exist (CLI not installe
 | Codex CLI | `~/.codex/AGENTS.md` | `./AGENTS.md` | Markdown |
 | OpenCode | `~/.config/opencode/AGENTS.md` | `./AGENTS.md` | Markdown |
 | Kimi CLI | `~/.kimi/AGENTS.md` | `./AGENTS.md` | Markdown |
+| Vibe CLI | `~/.vibe/AGENTS.md` | `./AGENTS.md` | Markdown |
 | Kiro CLI | `~/.kiro/steering/claude-instructions.md` | `.kiro/steering/claude-instructions.md` | Markdown + frontmatter |
 | Cursor | Not supported (SQLite) | `.cursor/rules/claude-instructions.mdc` | MDC (Markdown + frontmatter) |
 

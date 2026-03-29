@@ -9,6 +9,7 @@ import { writeToOpenCode } from "./writers/opencode.js";
 import { writeToKiro } from "./writers/kiro.js";
 import { writeToCursor } from "./writers/cursor.js";
 import { writeToKimi, resolveKimiMcpConfigPath } from "./writers/kimi.js";
+import { writeToVibe, resolveVibeConfigPath } from "./writers/vibe.js";
 import { createBackup, getFilesToBackup } from "./backup.js";
 import { PATHS } from "./paths.js";
 import type { SyncTarget, UnifiedMcpServer } from "./types.js";
@@ -42,16 +43,18 @@ const program = new Command();
 
 program
   .name("sync-agents")
-  .description("Sync Claude Code MCP settings to Gemini CLI / Codex CLI / OpenCode / Kiro CLI")
-  .version("0.4.1");
+  .description(
+    "Sync Claude Code MCP settings to Gemini CLI / Codex CLI / OpenCode / Kiro CLI / Vibe CLI"
+  )
+  .version("0.4.2");
 
 program
   .command("sync")
   .description("Sync MCP settings from Claude Code to other CLIs")
   .option(
     "-t, --target <targets...>",
-    "sync targets (gemini, codex, opencode, kiro, cursor, kimi, aider)",
-    ["gemini", "codex", "opencode", "kiro", "cursor", "kimi", "aider"]
+    "sync targets (gemini, codex, opencode, kiro, cursor, kimi, vibe, aider)",
+    ["gemini", "codex", "opencode", "kiro", "cursor", "kimi", "vibe", "aider"]
   )
   .option("--dry-run", "preview mode, no files will be written", false)
   .option("--no-backup", "skip backup")
@@ -64,6 +67,10 @@ program
     "--kimi-home <path>",
     "Kimi config directory (default: ~/.kimi, or specify project-level .kimi/)"
   )
+  .option(
+    "--vibe-home <path>",
+    "Vibe config directory (default: ~/.vibe, or specify project-level .vibe/)"
+  )
   .option("--report <format>", "output format: text or json", "text")
   .option("-v, --verbose", "show detailed output", false)
   .action(async (opts) => {
@@ -74,6 +81,7 @@ program
     const skipOAuth = opts.skipOauth as boolean;
     const codexHome = opts.codexHome as string | undefined;
     const kimiHome = opts.kimiHome as string | undefined;
+    const vibeHome = opts.vibeHome as string | undefined;
     const reportFormat = opts.report as string;
     const jsonReport = reportFormat === "json";
 
@@ -123,11 +131,14 @@ program
     // 2. Backup
     const codexConfigPath = resolveCodexConfigPath(codexHome);
     const kimiConfigPath = resolveKimiMcpConfigPath(kimiHome);
+    const vibeConfigPath = resolveVibeConfigPath(vibeHome);
     if (!skipBackup && !dryRun) {
       if (!jsonReport) {
         console.log("💾 Backing up config files...");
       }
-      const backupDir = createBackup(getFilesToBackup(targets, codexConfigPath, kimiConfigPath));
+      const backupDir = createBackup(
+        getFilesToBackup(targets, codexConfigPath, kimiConfigPath, vibeConfigPath)
+      );
       if (!jsonReport) {
         console.log(`  Backup directory: ${backupDir}\n`);
       }
@@ -184,6 +195,18 @@ program
         }
       } else if (target === "kimi") {
         const result = writeToKimi(servers, dryRun, kimiHome);
+        targetReports.push({
+          target,
+          added: result.added,
+          skipped: result.skipped,
+          configPath: result.configPath,
+        });
+        if (!jsonReport) {
+          console.log(`  Target: ${result.configPath}`);
+          printResult(result.added, result.skipped);
+        }
+      } else if (target === "vibe") {
+        const result = writeToVibe(servers, dryRun, vibeHome);
         targetReports.push({
           target,
           added: result.added,
@@ -265,8 +288,8 @@ program
   .description("Compare MCP settings between Claude Code and other CLIs")
   .option(
     "-t, --target <targets...>",
-    "comparison targets (gemini, codex, opencode, kiro, cursor, kimi)",
-    ["gemini", "codex", "opencode", "kiro", "cursor", "kimi"]
+    "comparison targets (gemini, codex, opencode, kiro, cursor, kimi, vibe)",
+    ["gemini", "codex", "opencode", "kiro", "cursor", "kimi", "vibe"]
   )
   .option(
     "--kimi-home <path>",
@@ -320,6 +343,18 @@ program
           onlyInTarget: [],
           note: codexNote,
         });
+      } else if (target === "vibe") {
+        const vibeNote = "use 'vibe' to view (TOML array format)";
+        if (!jsonReport) {
+          console.log(`  Vibe: ${vibeNote}`);
+        }
+        targetReports.push({
+          target: "vibe",
+          shared: [],
+          onlyInSource: [],
+          onlyInTarget: [],
+          note: vibeNote,
+        });
       } else if (Object.hasOwn(diffConfigs, target)) {
         const { path, key } = diffConfigs[target];
         const names = readExistingServerNames(path, key);
@@ -357,8 +392,8 @@ program
   .description("Detect MCP config drift between Claude Code and target CLIs")
   .option(
     "-t, --target <targets...>",
-    "doctor targets (gemini, codex, opencode, kiro, cursor, kimi)",
-    ["gemini", "codex", "opencode", "kiro", "cursor", "kimi"]
+    "doctor targets (gemini, codex, opencode, kiro, cursor, kimi, vibe)",
+    ["gemini", "codex", "opencode", "kiro", "cursor", "kimi", "vibe"]
   )
   .option("--skip-oauth", "ignore OAuth-only Claude servers", false)
   .option("--fix", "auto-run reconcile when drift is detected", false)
@@ -373,6 +408,10 @@ program
     "--kimi-home <path>",
     "Kimi config directory (default: ~/.kimi, or specify project-level .kimi/)"
   )
+  .option(
+    "--vibe-home <path>",
+    "Vibe config directory (default: ~/.vibe, or specify project-level .vibe/)"
+  )
   .action((opts) => {
     const targets = opts.target as SyncTarget[];
     const skipOAuth = opts.skipOauth as boolean;
@@ -382,6 +421,7 @@ program
     const reportFormat = opts.report as string;
     const codexHome = opts.codexHome as string | undefined;
     const kimiHome = opts.kimiHome as string | undefined;
+    const vibeHome = opts.vibeHome as string | undefined;
     const jsonReport = reportFormat === "json";
 
     if (reportFormat !== "text" && reportFormat !== "json") {
@@ -404,6 +444,7 @@ program
         skipOAuth,
         codexHome,
         kimiHome,
+        vibeHome,
       });
       if (fixed.status === "failed") {
         if (fixed.reason === "doctor_parse") {
@@ -425,7 +466,7 @@ program
       return;
     }
 
-    const report = runDoctor(targets, { skipOAuth, codexHome, kimiHome });
+    const report = runDoctor(targets, { skipOAuth, codexHome, kimiHome, vibeHome });
 
     if (jsonReport) {
       console.log(formatDoctorReport(report));
@@ -477,8 +518,8 @@ program
   .description("Validate MCP schema and target capability compatibility")
   .option(
     "-t, --target <targets...>",
-    "validation targets (gemini, codex, opencode, kiro, cursor, kimi)",
-    ["gemini", "codex", "opencode", "kiro", "cursor", "kimi"]
+    "validation targets (gemini, codex, opencode, kiro, cursor, kimi, vibe)",
+    ["gemini", "codex", "opencode", "kiro", "cursor", "kimi", "vibe"]
   )
   .option("--skip-oauth", "ignore OAuth-only Claude servers", false)
   .option("--fix", "auto-run reconcile after validation passes", false)
@@ -487,6 +528,7 @@ program
   .option("--report <format>", "output format: text or json", "text")
   .option("--codex-home <path>", "Codex config directory (used by --fix for reconcile)")
   .option("--kimi-home <path>", "Kimi config directory (used by --fix for reconcile)")
+  .option("--vibe-home <path>", "Vibe config directory (used by --fix for reconcile)")
   .action((opts) => {
     const targets = opts.target as SyncTarget[];
     const skipOAuth = opts.skipOauth as boolean;
@@ -496,6 +538,7 @@ program
     const reportFormat = opts.report as string;
     const codexHome = opts.codexHome as string | undefined;
     const kimiHome = opts.kimiHome as string | undefined;
+    const vibeHome = opts.vibeHome as string | undefined;
     const jsonReport = reportFormat === "json";
 
     if (reportFormat !== "text" && reportFormat !== "json") {
@@ -564,6 +607,7 @@ program
         skipOAuth,
         codexHome,
         kimiHome,
+        vibeHome,
       });
       if (fixed.status === "failed") {
         if (fixed.reason === "doctor_parse") {
@@ -590,8 +634,8 @@ program
   .description("Validate + detect drift + sync only missing MCP servers")
   .option(
     "-t, --target <targets...>",
-    "reconcile targets (gemini, codex, opencode, kiro, cursor, kimi)",
-    ["gemini", "codex", "opencode", "kiro", "cursor", "kimi"]
+    "reconcile targets (gemini, codex, opencode, kiro, cursor, kimi, vibe)",
+    ["gemini", "codex", "opencode", "kiro", "cursor", "kimi", "vibe"]
   )
   .option("--dry-run", "preview mode, no files will be written", false)
   .option("--no-backup", "skip backup")
@@ -604,6 +648,10 @@ program
     "--kimi-home <path>",
     "Kimi config directory (default: ~/.kimi, or specify project-level .kimi/)"
   )
+  .option(
+    "--vibe-home <path>",
+    "Vibe config directory (default: ~/.vibe, or specify project-level .vibe/)"
+  )
   .option("--report <format>", "output format: text or json", "text")
   .action((opts) => {
     const targets = opts.target as SyncTarget[];
@@ -612,6 +660,7 @@ program
     const skipOAuth = opts.skipOauth as boolean;
     const codexHome = opts.codexHome as string | undefined;
     const kimiHome = opts.kimiHome as string | undefined;
+    const vibeHome = opts.vibeHome as string | undefined;
     const reportFormat = opts.report as string;
     const jsonReport = reportFormat === "json";
 
@@ -630,6 +679,7 @@ program
       skipOAuth,
       codexHome,
       kimiHome,
+      vibeHome,
     });
 
     if (jsonReport) {
@@ -695,8 +745,8 @@ program
   .description("Sync CLAUDE.md instruction files to other AI agent formats")
   .option(
     "-t, --target <targets...>",
-    "sync targets (gemini, codex, opencode, kiro, cursor, kimi)",
-    ["gemini", "codex", "opencode", "kiro", "cursor", "kimi"]
+    "sync targets (gemini, codex, opencode, kiro, cursor, kimi, vibe)",
+    ["gemini", "codex", "opencode", "kiro", "cursor", "kimi", "vibe"]
   )
   .option("--global", "sync global config (~/.claude/CLAUDE.md)", false)
   .option(
@@ -922,6 +972,7 @@ function printResult(added: string[], skipped: string[]) {
 function getTargetLabel(target: SyncTarget): string {
   if (target === "opencode") return "OpenCode";
   if (target === "kimi") return "Kimi";
+  if (target === "vibe") return "Vibe";
   return target.toUpperCase();
 }
 

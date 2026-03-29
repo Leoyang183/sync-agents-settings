@@ -18,6 +18,7 @@ export type InstructionsTarget =
   | "kiro"
   | "cursor"
   | "kimi"
+  | "vibe"
   | "aider";
 export type ImportMode = "inline" | "strip";
 
@@ -176,6 +177,12 @@ export function getGlobalSyncPairs(targets: InstructionsTarget[]): SyncPair[] {
         target: PATHS.kimiMdGlobal,
         targetLabel: "Kimi CLI (~/.kimi/AGENTS.md)",
       });
+    } else if (target === "vibe") {
+      pairs.push({
+        source: PATHS.claudeMdGlobal,
+        target: PATHS.vibeMdGlobal,
+        targetLabel: "Vibe CLI (~/.vibe/AGENTS.md)",
+      });
     } else if (target === "aider") {
       pairs.push({
         source: PATHS.claudeMdGlobal,
@@ -253,6 +260,12 @@ export function getLocalSyncPairs(targets: InstructionsTarget[], cwd: string): S
         targetLabel: "Cursor (.cursor/rules/claude-instructions.mdc)",
         transform: wrapForCursor,
       });
+    } else if (target === "vibe") {
+      const targetPath = resolve(cwd, "AGENTS.md");
+      if (!seenPaths.has(targetPath)) {
+        pairs.push({ source, target: targetPath, targetLabel: "Vibe CLI (./AGENTS.md)" });
+        seenPaths.add(targetPath);
+      }
     } else if (target === "aider") {
       const conventionsPath = resolve(cwd, ".aider", "CONVENTIONS.md");
       pairs.push({

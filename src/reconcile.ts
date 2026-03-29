@@ -14,6 +14,7 @@ import { writeToOpenCode } from "./writers/opencode.js";
 import { writeToKiro } from "./writers/kiro.js";
 import { writeToCursor } from "./writers/cursor.js";
 import { writeToKimi, resolveKimiMcpConfigPath } from "./writers/kimi.js";
+import { writeToVibe, resolveVibeConfigPath } from "./writers/vibe.js";
 
 export interface ReconcileOptions {
   dryRun?: boolean;
@@ -21,6 +22,7 @@ export interface ReconcileOptions {
   skipOAuth?: boolean;
   codexHome?: string;
   kimiHome?: string;
+  vibeHome?: string;
 }
 
 type ReconcileStatus = "validation_failed" | "doctor_failed" | "noop" | "reconciled";
@@ -62,6 +64,7 @@ export function reconcileTargets(
     skipOAuth: options.skipOAuth,
     codexHome: options.codexHome,
     kimiHome: options.kimiHome,
+    vibeHome: options.vibeHome,
   });
   if (doctor.hasErrors) {
     return {
@@ -102,7 +105,10 @@ export function reconcileTargets(
   if (!options.dryRun && !options.skipBackup && targetsToSync.length > 0) {
     const codexConfigPath = resolveCodexConfigPath(options.codexHome);
     const kimiConfigPath = resolveKimiMcpConfigPath(options.kimiHome);
-    backupDir = createBackup(getFilesToBackup(targetsToSync, codexConfigPath, kimiConfigPath));
+    const vibeConfigPath = resolveVibeConfigPath(options.vibeHome);
+    backupDir = createBackup(
+      getFilesToBackup(targetsToSync, codexConfigPath, kimiConfigPath, vibeConfigPath)
+    );
   }
 
   for (const result of doctor.results) {
@@ -113,7 +119,8 @@ export function reconcileTargets(
       neededServers,
       Boolean(options.dryRun),
       options.codexHome,
-      options.kimiHome
+      options.kimiHome,
+      options.vibeHome
     );
     syncResults.push({
       target: result.target,
@@ -137,7 +144,8 @@ function writeTarget(
   servers: UnifiedMcpServer[],
   dryRun: boolean,
   codexHome?: string,
-  kimiHome?: string
+  kimiHome?: string,
+  vibeHome?: string
 ): { added: string[]; skipped: string[] } {
   if (target === "gemini") {
     return writeToGemini(servers, dryRun);
@@ -156,6 +164,10 @@ function writeTarget(
     const { added, skipped } = writeToKimi(servers, dryRun, kimiHome);
     return { added, skipped };
   }
+  if (target === "vibe") {
+    const { added, skipped } = writeToVibe(servers, dryRun, vibeHome);
+    return { added, skipped };
+  }
   return writeToCursor(servers, dryRun);
 }
 
@@ -170,6 +182,7 @@ export function groupValidationByTarget(
     kiro: [],
     kimi: [],
     cursor: [],
+    vibe: [],
   };
   for (const target of targets) {
     grouped[target] ??= [];

@@ -28,6 +28,10 @@ export const PATHS = {
   // Cursor
   cursorMcpConfig: join(HOME, ".cursor", "mcp.json"),
 
+  // Vibe CLI (Mistral)
+  vibeDir: join(HOME, ".vibe"),
+  vibeConfig: join(HOME, ".vibe", "config.toml"),
+
   // Instructions (global)
   claudeMdGlobal: join(HOME, ".claude", "CLAUDE.md"),
   geminiMdGlobal: join(HOME, ".gemini", "GEMINI.md"),
@@ -35,6 +39,7 @@ export const PATHS = {
   openCodeMdGlobal: join(HOME, ".config", "opencode", "AGENTS.md"),
   kiroSteeringGlobal: join(HOME, ".kiro", "steering", "claude-instructions.md"),
   kimiMdGlobal: join(HOME, ".kimi", "AGENTS.md"),
+  vibeMdGlobal: join(HOME, ".vibe", "AGENTS.md"),
   aiderConventionsGlobal: join(HOME, ".aider", "CONVENTIONS.md"),
   aiderConfigGlobal: join(HOME, ".aider.conf.yml"),
 

@@ -10,6 +10,7 @@ This matrix tracks what `sync-agents-settings` supports today across rule files 
 | Codex CLI | `~/.codex/AGENTS.md` | `./AGENTS.md` | Yes | Yes | Supported |
 | OpenCode | `~/.config/opencode/AGENTS.md` | `./AGENTS.md` | Yes | Yes | Supported |
 | Kimi CLI | `~/.kimi/AGENTS.md` | `./AGENTS.md` | Yes | Yes | Supported |
+| Vibe CLI | `~/.vibe/AGENTS.md` | `./AGENTS.md` | Yes | Yes | Supported |
 | Aider CLI | `~/.aider/CONVENTIONS.md` | `.aider/CONVENTIONS.md` | Yes | Yes | Supported |
 | Kiro CLI | `~/.kiro/steering/claude-instructions.md` | `.kiro/steering/claude-instructions.md` | Yes | Yes | Supported |
 | Cursor | N/A (SQLite-managed global rules) | `.cursor/rules/claude-instructions.mdc` | No | Yes | Project-only |
@@ -27,6 +28,7 @@ Notes:
 | Codex CLI | `~/.codex/config.toml` | `.codex/config.toml` | Yes | Yes | Supported |
 | OpenCode | `~/.config/opencode/opencode.json` | `opencode.json` | Yes | Yes | Supported |
 | Kimi CLI | `~/.kimi/mcp.json` | `.kimi/mcp.json` | Yes | Yes | Supported |
+| Vibe CLI | `~/.vibe/config.toml` | `.vibe/config.toml` | Yes | Yes | Supported |
 | Aider CLI | N/A | N/A | No | No | Planned (experimental backlog) |
 | Kiro CLI | `~/.kiro/settings/mcp.json` | `.kiro/settings/mcp.json` | Yes | Yes | Supported |
 | Cursor | `~/.cursor/mcp.json` | `.cursor/mcp.json` | Yes | Yes | Supported |

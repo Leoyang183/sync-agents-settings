@@ -7,14 +7,14 @@
 [![MCP](https://img.shields.io/badge/MCP-compatible-8A2BE2)](https://modelcontextprotocol.io/)
 [![CI](https://github.com/Leoyang183/sync-agents-settings/actions/workflows/ci.yml/badge.svg)](https://github.com/Leoyang183/sync-agents-settings/actions/workflows/ci.yml)
 
-将 **Claude Code** 的 MCP server 配置和指令文件（CLAUDE.md）同步到 **Gemini CLI**、**Codex CLI**、**OpenCode**、**Kiro CLI**、**Cursor**、**Kimi CLI** 和 **Aider CLI**。
+将 **Claude Code** 的 MCP server 配置和指令文件（CLAUDE.md）同步到 **Gemini CLI**、**Codex CLI**、**OpenCode**、**Kiro CLI**、**Cursor**、**Kimi CLI**、**Vibe CLI**（Mistral）和 **Aider CLI**。
 
 **其他语言：** [🇺🇸 English](../../README.md) | [🇹🇼 繁體中文](README.zh-tw.md) | [🇯🇵 日本語](README.ja.md) | [🇰🇷 한국어](README.ko.md)
 **支持矩阵：** [CLI 兼容性矩阵](../compatibility-matrix.md)
 
 ## 为什么需要这个工具
 
-如果你主要用 Claude Code 开发，但也会切换其他 AI agent（Gemini CLI、Codex CLI、OpenCode、Kiro、Cursor、Kimi CLI、Aider CLI）来利用各家的免费额度或不同模型，你一定知道这个痛点——每个工具的 MCP 配置格式都不一样，一个一个配置实在太累。
+如果你主要用 Claude Code 开发，但也会切换其他 AI agent（Gemini CLI、Codex CLI、OpenCode、Kiro、Cursor、Kimi CLI、Vibe CLI、Aider CLI）来利用各家的免费额度或不同模型，你一定知道这个痛点——每个工具的 MCP 配置格式都不一样，一个一个配置实在太累。
 
 指令文件也是一样——CLAUDE.md、GEMINI.md、AGENTS.md 都需要相同的内容，但格式各不相同。
 
@@ -85,6 +85,7 @@ sync-agents sync --target opencode
 sync-agents sync --target kiro
 sync-agents sync --target cursor
 sync-agents sync --target kimi
+sync-agents sync --target vibe
 
 # 同步到 Codex 项目级配置
 sync-agents sync --target codex --codex-home ./my-project/.codex
@@ -114,7 +115,7 @@ sync-agents sync-instructions --global
 sync-agents sync-instructions --local
 
 # 同步到特定目标
-sync-agents sync-instructions --target gemini codex kimi aider
+sync-agents sync-instructions --target gemini codex kimi vibe aider
 
 # 自动覆盖不询问（适用于 CI）
 sync-agents sync-instructions --on-conflict overwrite
@@ -141,7 +142,8 @@ sync-agents sync-instructions --dry-run
 ~/.claude/plugins/ ──┘                            │
                                                  ├─→ Kiro Writer     ─→ ~/.kiro/settings/mcp.json
                                                  ├─→ Cursor Writer   ─→ ~/.cursor/mcp.json
-                                                 └─→ Kimi Writer     ─→ ~/.kimi/mcp.json
+                                                 ├─→ Kimi Writer     ─→ ~/.kimi/mcp.json
+                                                 └─→ Vibe Writer     ─→ ~/.vibe/config.toml
 ```
 
 | 阶段 | 说明 |
@@ -153,6 +155,7 @@ sync-agents sync-instructions --dry-run
 | **Kiro Writer** | 与 Claude 相同格式，`${VAR:-default}` → 展开 |
 | **Cursor Writer** | 与 Claude 相同格式，`${VAR:-default}` → 展开 |
 | **Kimi Writer** | 与 Claude 相同格式，`${VAR:-default}` → 展开 |
+| **Vibe Writer** | JSON → TOML `[[mcp_servers]]`，需要 transport 字段，`${VAR:-default}` → 展开 |
 
 ### 指令文件同步（`sync-instructions`）
 
@@ -163,7 +166,8 @@ sync-agents sync-instructions --dry-run
 | Gemini | `~/.gemini/GEMINI.md` | `./GEMINI.md` | 直接复制（展开独立行 `@import`） |
 | Codex | `~/.codex/AGENTS.md` | `./AGENTS.md` | 直接复制（展开独立行 `@import`） |
 | OpenCode | `~/.config/opencode/AGENTS.md` | `./AGENTS.md`（与 Codex 共用） | 直接复制（展开独立行 `@import`） |
-| Kimi | `~/.kimi/AGENTS.md` | `./AGENTS.md`（与 Codex / OpenCode 共用） | 直接复制（展开独立行 `@import`） |
+| Kimi | `~/.kimi/AGENTS.md` | `./AGENTS.md`（与 Codex / OpenCode / Vibe 共用） | 直接复制（展开独立行 `@import`） |
+| Vibe | `~/.vibe/AGENTS.md` | `./AGENTS.md`（与 Codex / OpenCode / Kimi 共用） | 直接复制（展开独立行 `@import`） |
 | Aider | `~/.aider/CONVENTIONS.md` | `.aider/CONVENTIONS.md` | 直接复制 + 自动更新 `.aider.conf.yml` `read` |
 | Kiro | `~/.kiro/steering/claude-instructions.md` | `.kiro/steering/claude-instructions.md` | 加上 `inclusion: always` frontmatter |
 | Cursor | 不支持（SQLite） | `.cursor/rules/claude-instructions.mdc` | 加上 `alwaysApply: true` frontmatter |
@@ -203,6 +207,8 @@ sync-agents sync-instructions --dry-run
 | Cursor（全局） | `~/.cursor/mcp.json` | JSON |
 | Kimi CLI（全局） | `~/.kimi/mcp.json` | JSON |
 | Kimi CLI（项目） | `.kimi/mcp.json`（用 `--kimi-home ./.kimi`） | JSON |
+| Vibe CLI（全局） | `~/.vibe/config.toml` | TOML |
+| Vibe CLI（项目） | `.vibe/config.toml`（用 `--vibe-home ./.vibe`） | TOML |
 
 ### 指令文件路径
 
@@ -213,6 +219,7 @@ sync-agents sync-instructions --dry-run
 | Codex CLI | `~/.codex/AGENTS.md` | `./AGENTS.md` | Markdown |
 | OpenCode | `~/.config/opencode/AGENTS.md` | `./AGENTS.md` | Markdown |
 | Kimi CLI | `~/.kimi/AGENTS.md` | `./AGENTS.md` | Markdown |
+| Vibe CLI | `~/.vibe/AGENTS.md` | `./AGENTS.md` | Markdown |
 | Aider CLI | `~/.aider/CONVENTIONS.md` | `.aider/CONVENTIONS.md` | Markdown |
 | Kiro CLI | `~/.kiro/steering/claude-instructions.md` | `.kiro/steering/claude-instructions.md` | Markdown + frontmatter |
 | Cursor | 不支持（SQLite） | `.cursor/rules/claude-instructions.mdc` | MDC（Markdown + frontmatter） |
