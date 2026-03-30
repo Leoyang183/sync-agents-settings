@@ -1,6 +1,7 @@
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { dirname } from "node:path";
 import { PATHS } from "../paths.js";
+import { convertEnvVarSyntax } from "../env.js";
 import type { GeminiMcpServer, GeminiSettings, UnifiedMcpServer } from "../types.js";
 
 export function writeToGemini(
@@ -70,7 +71,7 @@ function toGeminiServer(server: UnifiedMcpServer): GeminiMcpServer | null {
     return {
       command: server.command,
       ...(server.args && { args: server.args }),
-      ...(server.env && { env: convertEnvSyntax(server.env) }),
+      ...(server.env && { env: convertEnvVarSyntax(server.env, (v) => `$${v}`) }),
     };
   }
 
@@ -90,15 +91,4 @@ function toGeminiServer(server: UnifiedMcpServer): GeminiMcpServer | null {
   }
 
   return null;
-}
-
-/** Convert Claude env var syntax ${VAR} to Gemini syntax $VAR */
-function convertEnvSyntax(env: Record<string, string>): Record<string, string> {
-  const result: Record<string, string> = {};
-  for (const [key, val] of Object.entries(env)) {
-    // ${VAR:-default} → keep as-is (Gemini also supports this)
-    // ${VAR} → $VAR
-    result[key] = val.replace(/\$\{([^}:]+)\}/g, "$$$1");
-  }
-  return result;
 }

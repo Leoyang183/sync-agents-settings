@@ -43,6 +43,23 @@ import {
 } from "./instructions.js";
 import type { ConflictAction } from "./prompt.js";
 
+/** MCP sync targets (all commands except sync-instructions, which adds "aider") */
+const ALL_MCP_TARGETS: SyncTarget[] = [
+  "gemini",
+  "codex",
+  "opencode",
+  "kiro",
+  "cursor",
+  "kimi",
+  "vibe",
+  "qwen",
+  "amp",
+  "cline",
+  "windsurf",
+];
+
+const ALL_SYNC_TARGETS = [...ALL_MCP_TARGETS, "aider" as SyncTarget];
+
 const program = new Command();
 
 program
@@ -57,21 +74,8 @@ program
   .description("Sync MCP settings from Claude Code to other CLIs")
   .option(
     "-t, --target <targets...>",
-    "sync targets (gemini, codex, opencode, kiro, cursor, kimi, vibe, qwen, amp, cline, windsurf, aider)",
-    [
-      "gemini",
-      "codex",
-      "opencode",
-      "kiro",
-      "cursor",
-      "kimi",
-      "vibe",
-      "qwen",
-      "amp",
-      "cline",
-      "windsurf",
-      "aider",
-    ]
+    `sync targets (${ALL_SYNC_TARGETS.join(", ")})`,
+    ALL_SYNC_TARGETS
   )
   .option("--dry-run", "preview mode, no files will be written", false)
   .option("--no-backup", "skip backup")
@@ -391,23 +395,9 @@ program
 program
   .command("diff")
   .description("Compare MCP settings between Claude Code and other CLIs")
-  .option(
-    "-t, --target <targets...>",
-    "comparison targets (gemini, codex, opencode, kiro, cursor, kimi, vibe, qwen, amp, cline, windsurf)",
-    [
-      "gemini",
-      "codex",
-      "opencode",
-      "kiro",
-      "cursor",
-      "kimi",
-      "vibe",
-      "qwen",
-      "amp",
-      "cline",
-      "windsurf",
-    ]
-  )
+  .option("-t, --target <targets...>", `comparison targets (${ALL_MCP_TARGETS.join(", ")})`, [
+    ...ALL_MCP_TARGETS,
+  ])
   .option(
     "--kimi-home <path>",
     "Kimi config directory (default: ~/.kimi, or specify project-level .kimi/)"
@@ -531,23 +521,9 @@ program
 program
   .command("doctor")
   .description("Detect MCP config drift between Claude Code and target CLIs")
-  .option(
-    "-t, --target <targets...>",
-    "doctor targets (gemini, codex, opencode, kiro, cursor, kimi, vibe, qwen, amp, cline, windsurf)",
-    [
-      "gemini",
-      "codex",
-      "opencode",
-      "kiro",
-      "cursor",
-      "kimi",
-      "vibe",
-      "qwen",
-      "amp",
-      "cline",
-      "windsurf",
-    ]
-  )
+  .option("-t, --target <targets...>", `doctor targets (${ALL_MCP_TARGETS.join(", ")})`, [
+    ...ALL_MCP_TARGETS,
+  ])
   .option("--skip-oauth", "ignore OAuth-only Claude servers", false)
   .option("--fix", "auto-run reconcile when drift is detected", false)
   .option("--dry-run", "when used with --fix, preview without writing", false)
@@ -702,23 +678,9 @@ program
 program
   .command("validate")
   .description("Validate MCP schema and target capability compatibility")
-  .option(
-    "-t, --target <targets...>",
-    "validation targets (gemini, codex, opencode, kiro, cursor, kimi, vibe, qwen, amp, cline, windsurf)",
-    [
-      "gemini",
-      "codex",
-      "opencode",
-      "kiro",
-      "cursor",
-      "kimi",
-      "vibe",
-      "qwen",
-      "amp",
-      "cline",
-      "windsurf",
-    ]
-  )
+  .option("-t, --target <targets...>", `validation targets (${ALL_MCP_TARGETS.join(", ")})`, [
+    ...ALL_MCP_TARGETS,
+  ])
   .option("--skip-oauth", "ignore OAuth-only Claude servers", false)
   .option("--fix", "auto-run reconcile after validation passes", false)
   .option("--dry-run", "when used with --fix, preview without writing", false)
@@ -842,23 +804,9 @@ program
 program
   .command("reconcile")
   .description("Validate + detect drift + sync only missing MCP servers")
-  .option(
-    "-t, --target <targets...>",
-    "reconcile targets (gemini, codex, opencode, kiro, cursor, kimi, vibe, qwen, amp, cline, windsurf)",
-    [
-      "gemini",
-      "codex",
-      "opencode",
-      "kiro",
-      "cursor",
-      "kimi",
-      "vibe",
-      "qwen",
-      "amp",
-      "cline",
-      "windsurf",
-    ]
-  )
+  .option("-t, --target <targets...>", `reconcile targets (${ALL_MCP_TARGETS.join(", ")})`, [
+    ...ALL_MCP_TARGETS,
+  ])
   .option("--dry-run", "preview mode, no files will be written", false)
   .option("--no-backup", "skip backup")
   .option("--skip-oauth", "ignore OAuth-only Claude servers", false)
@@ -992,23 +940,9 @@ program
 program
   .command("sync-instructions")
   .description("Sync CLAUDE.md instruction files to other AI agent formats")
-  .option(
-    "-t, --target <targets...>",
-    "sync targets (gemini, codex, opencode, kiro, cursor, kimi, vibe, qwen, amp, cline, windsurf)",
-    [
-      "gemini",
-      "codex",
-      "opencode",
-      "kiro",
-      "cursor",
-      "kimi",
-      "vibe",
-      "qwen",
-      "amp",
-      "cline",
-      "windsurf",
-    ]
-  )
+  .option("-t, --target <targets...>", `instruction sync targets (${ALL_MCP_TARGETS.join(", ")})`, [
+    ...ALL_MCP_TARGETS,
+  ])
   .option("--global", "sync global config (~/.claude/CLAUDE.md)", false)
   .option(
     "--local",

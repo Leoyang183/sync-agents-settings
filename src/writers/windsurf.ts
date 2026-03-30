@@ -1,6 +1,7 @@
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join, resolve } from "node:path";
+import { convertEnvVarSyntax } from "../env.js";
 import type { UnifiedMcpServer } from "../types.js";
 
 const DEFAULT_WINDSURF_HOME = join(homedir(), ".codeium", "windsurf");
@@ -89,7 +90,7 @@ function toWindsurfServer(server: UnifiedMcpServer): WindsurfMcpServer | null {
     return {
       command: server.command,
       ...(server.args && { args: server.args }),
-      ...(server.env && { env: convertEnvSyntax(server.env) }),
+      ...(server.env && { env: convertEnvVarSyntax(server.env, (v) => `\${env:${v}}`) }),
     };
   }
 
@@ -102,13 +103,4 @@ function toWindsurfServer(server: UnifiedMcpServer): WindsurfMcpServer | null {
   }
 
   return null;
-}
-
-/** Convert Claude env var syntax ${VAR} to Windsurf syntax ${env:VAR} */
-function convertEnvSyntax(env: Record<string, string>): Record<string, string> {
-  const result: Record<string, string> = {};
-  for (const [key, val] of Object.entries(env)) {
-    result[key] = val.replace(/\$\{([^}:]+)\}/g, "${env:$1}");
-  }
-  return result;
 }
